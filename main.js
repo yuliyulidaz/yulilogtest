@@ -32,6 +32,7 @@ const state = {
     },
     pickrs: {}
 };
+window._mainState = state; // expose for inter-script communication
 
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
@@ -517,6 +518,7 @@ window.downloadImage = () => downloadImage(state.canvas);
 
 window.toggleIndentation = function() {
     state.indentation = !state.indentation;
+    if (window._inlineState) window._inlineState.indentation = state.indentation;
     updateIndentationUI();
     updateCanvas();
 };
@@ -542,6 +544,7 @@ window.toggleQuoteStyle = function() {
         btn.classList.add('text-slate-400', 'bg-slate-50');
     }
     textarea.value = text;
+    if (window._inlineState) window._inlineState.isCurlyQuotes = state.isCurlyQuotes;
     updateCanvas();
 };
 
