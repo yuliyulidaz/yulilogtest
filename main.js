@@ -310,16 +310,19 @@ function initColorPickers() {
         pickr.on('show', (color, instance) => { initialColor = state.colors[key]; });
         pickr.on('change', (color, source, instance) => {
             state.colors[key] = color.toHEXA().toString();
-            updateCanvas();     
+            if (window._inlineState && window._inlineState.colors) window._inlineState.colors[key] = state.colors[key];
+            updateCanvas();
         });
         pickr.on('save', (color, instance) => {
             state.colors[key] = color.toHEXA().toString();
+            if (window._inlineState && window._inlineState.colors) window._inlineState.colors[key] = state.colors[key];
             instance.applyColor(true);
             instance.hide();
         });
         pickr.on('cancel', (instance) => {
             state.colors[key] = initialColor;
-            pickr.setColor(initialColor, true); 
+            if (window._inlineState && window._inlineState.colors) window._inlineState.colors[key] = initialColor;
+            pickr.setColor(initialColor, true);
             updateCanvas();
             instance.hide();
         });
@@ -329,6 +332,7 @@ function initColorPickers() {
         });
         pickr.on('swatchselect', (color) => {
             state.colors[key] = color.toHEXA().toString();
+            if (window._inlineState && window._inlineState.colors) window._inlineState.colors[key] = state.colors[key];
             updateCanvas();
         });
         return pickr;
@@ -614,6 +618,12 @@ window.setPreset = function(type, color1, color2, textColor) {
         if(state.pickrs.gradEnd) state.pickrs.gradEnd.setColor(color2);
     }
     if(state.pickrs.text) state.pickrs.text.setColor(textColor);
+    if (window._inlineState) {
+        window._inlineState.bgType = type;
+        window._inlineState.colors.text = textColor;
+        if (type === 'solid') { window._inlineState.colors.bgMain = color1; }
+        else { window._inlineState.colors.gradStart = color1; window._inlineState.colors.gradEnd = color2; }
+    }
     togglePaletteVisibility();
     updateCanvas();
 };

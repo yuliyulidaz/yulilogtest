@@ -210,7 +210,9 @@ export function drawContent(ctx, width, height, state) {
         else                             logoY = height - margin - radius;
 
         ctx.save();
-        ctx.globalAlpha = 0.8;
+        const logoOpacityEl = document.getElementById('logoOpacity');
+        const logoOpacityVal = logoOpacityEl ? parseInt(logoOpacityEl.value) || 0 : 0;
+        ctx.globalAlpha = 1.0 - (logoOpacityVal / 100);
         ctx.beginPath();
         ctx.arc(logoX, logoY, radius, 0, Math.PI * 2);
         ctx.closePath();

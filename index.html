@@ -1356,17 +1356,20 @@
                 pickr.on('change', (color, source, instance) => {
                     const hex = color.toHEXA().toString();
                     state.colors[key] = hex;
-                    updateCanvas();     
+                    if (window._mainState && window._mainState.colors) window._mainState.colors[key] = hex;
+                    updateCanvas();
                 });
                 pickr.on('save', (color, instance) => {
                     const hex = color.toHEXA().toString();
                     state.colors[key] = hex;
+                    if (window._mainState && window._mainState.colors) window._mainState.colors[key] = hex;
                     instance.applyColor(true);
                     instance.hide();
                 });
                 pickr.on('cancel', (instance) => {
                     state.colors[key] = initialColor;
-                    pickr.setColor(initialColor, true); 
+                    if (window._mainState && window._mainState.colors) window._mainState.colors[key] = initialColor;
+                    pickr.setColor(initialColor, true);
                     updateCanvas();
                     instance.hide();
                 });
@@ -1377,6 +1380,7 @@
                 pickr.on('swatchselect', (color) => {
                     const hex = color.toHEXA().toString();
                     state.colors[key] = hex;
+                    if (window._mainState && window._mainState.colors) window._mainState.colors[key] = hex;
                     updateCanvas();
                 });
 
