@@ -629,7 +629,7 @@
 
                         <!-- 6. Background Image -->
                         <div class="pt-2">
-                            <label class="flex items-center justify-center w-full h-24 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl hover:border-brand-500 dark:hover:border-brand-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer group">
+                            <label id="bgImageUploadLabel" class="flex items-center justify-center w-full h-24 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl hover:border-brand-500 dark:hover:border-brand-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer group">
                                 <div class="text-center">
                                     <div class="text-slate-400 group-hover:text-brand-500 transition-colors mb-1">
                                         <i class="ph ph-image text-2xl"></i>
@@ -638,11 +638,14 @@
                                 </div>
                                 <input type="file" id="bgImageUpload" accept="image/*" class="hidden">
                             </label>
-                            
+
                             <div id="imageControlPanel" class="hidden mt-3 p-3 bg-slate-50 dark:bg-black/20 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3">
-                                <div class="flex justify-between items-center">
-                                    <span id="imageFileName" class="text-xs text-slate-500 truncate max-w-[150px]"></span>
-                                    <button id="btnImageDelete" onclick="deleteBackgroundImage()" class="text-xs text-red-500 hover:bg-red-50 p-1 rounded transition-colors"><i class="ph ph-trash"></i> 삭제</button>
+                                <div class="space-y-1">
+                                    <span id="imageFileName" class="text-xs text-slate-500 break-all block"></span>
+                                    <div class="flex justify-end gap-2">
+                                        <button id="btnBgImageChange" class="text-xs text-blue-500 hover:bg-blue-50 p-1 rounded transition-colors flex items-center gap-1"><i class="ph ph-arrow-clockwise"></i> 변경</button>
+                                        <button id="btnImageDelete" onclick="deleteBackgroundImage()" class="text-xs text-red-500 hover:bg-red-50 p-1 rounded transition-colors flex items-center gap-1"><i class="ph ph-trash"></i> 삭제</button>
+                                    </div>
                                 </div>
                                 
                                 <!-- Image Controls -->
@@ -776,7 +779,7 @@
 
                         <!-- Custom Logo Upload Panel -->
                         <div class="space-y-2 hidden" id="customLogoPanel">
-                            <label class="flex items-center justify-center w-full h-24 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl hover:border-brand-500 dark:hover:border-brand-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer group">
+                            <label id="customLogoUploadLabel" class="flex items-center justify-center w-full h-24 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl hover:border-brand-500 dark:hover:border-brand-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer group">
                                 <div class="text-center">
                                     <div class="text-slate-400 group-hover:text-brand-500 transition-colors mb-1">
                                         <i class="ph ph-image text-2xl"></i>
@@ -786,11 +789,12 @@
                                 <input type="file" id="customLogoUpload" accept="image/*" class="hidden">
                             </label>
 
-                            <div id="customLogoControlPanel" class="hidden mt-1 p-2 bg-slate-50 dark:bg-black/20 rounded-xl border border-slate-200 dark:border-slate-700 flex justify-between items-center">
-                                <span id="customLogoFileName" class="text-xs text-slate-500 truncate max-w-[150px]"></span>
-                                <button type="button" id="btnCustomLogoDelete" class="text-xs text-red-500 hover:bg-red-50 p-1 rounded transition-colors flex items-center gap-1 flex-shrink-0">
-                                    <i class="ph ph-trash"></i> 삭제
-                                </button>
+                            <div id="customLogoControlPanel" class="hidden mt-1 p-2 bg-slate-50 dark:bg-black/20 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1">
+                                <span id="customLogoFileName" class="text-xs text-slate-500 break-all block"></span>
+                                <div class="flex justify-end gap-2">
+                                    <button type="button" id="btnCustomLogoChange" class="text-xs text-blue-500 hover:bg-blue-50 p-1 rounded transition-colors flex items-center gap-1"><i class="ph ph-arrow-clockwise"></i> 변경</button>
+                                    <button type="button" id="btnCustomLogoDelete" class="text-xs text-red-500 hover:bg-red-50 p-1 rounded transition-colors flex items-center gap-1"><i class="ph ph-trash"></i> 삭제</button>
+                                </div>
                             </div>
                         </div>
 
@@ -1066,7 +1070,8 @@
                         const controlPanel = document.getElementById('customLogoControlPanel');
                         const fileNameEl = document.getElementById('customLogoFileName');
                         if (fileNameEl) fileNameEl.innerText = '저장된 로고';
-                        if (controlPanel) controlPanel.style.display = 'flex';
+                        if (controlPanel) controlPanel.style.display = 'block';
+                        document.getElementById('customLogoUploadLabel').classList.add('hidden');
                     }
 
                     // Restore Logo Mode Radio
@@ -1439,6 +1444,9 @@
             });
 
             document.getElementById('bgImageUpload').addEventListener('change', handleImageUpload);
+            document.getElementById('btnBgImageChange').addEventListener('click', () => {
+                document.getElementById('bgImageUpload').click();
+            });
 
             if (!window._logoHandlerReady) {
                 window._logoHandlerReady = true;
@@ -1484,7 +1492,8 @@
                     state.customLogoImage = new Image();
                     state.customLogoImage.onload = () => {
                         customLogoFileName.innerText = pendingLogoFileName;
-                        customLogoControlPanel.style.display = 'flex';
+                        customLogoControlPanel.style.display = 'block';
+                        document.getElementById('customLogoUploadLabel').classList.add('hidden');
                         cropModal.style.display = 'none';
                         customCropper.destroy();
                         customCropper = null;
@@ -1503,7 +1512,12 @@
                     state.customLogoImage = null;
                     customLogoControlPanel.style.display = 'none';
                     customLogoFileName.innerText = '';
+                    document.getElementById('customLogoUploadLabel').classList.remove('hidden');
                     updateCanvas();
+                });
+
+                document.getElementById('btnCustomLogoChange').addEventListener('click', () => {
+                    document.getElementById('customLogoUpload').click();
                 });
             }
         }
@@ -1616,6 +1630,7 @@
                     state.bgImageName = file.name;
                     document.getElementById('imageFileName').innerText = file.name;
                     document.getElementById('imageControlPanel').classList.remove('hidden');
+                    document.getElementById('bgImageUploadLabel').classList.add('hidden');
                     updateCanvas();
                 };
                 img.src = event.target.result;
@@ -1628,6 +1643,7 @@
             state.bgImageName = null;
             document.getElementById('bgImageUpload').value = '';
             document.getElementById('imageControlPanel').classList.add('hidden');
+            document.getElementById('bgImageUploadLabel').classList.remove('hidden');
             document.getElementById('overlayOpacity').value = 0;
             document.getElementById('overlayValueText').innerText = "원본";
             updateCanvas();
