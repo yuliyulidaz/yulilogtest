@@ -1,4 +1,5 @@
 export function initCustomLogo(state, updateCanvasCb) {
+    if (window._logoHandlerReady) return;
     // 1. DOM Elements
     const logoModeRadios = document.querySelectorAll('input[name="logoMode"]');
     const platformSelectPanel = document.getElementById('platformSelectPanel');
