@@ -781,18 +781,14 @@
                                     <div class="text-slate-400 group-hover:text-brand-500 transition-colors mb-1">
                                         <i class="ph ph-image text-2xl"></i>
                                     </div>
-                                    <span class="text-xs text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-300">나의 로고 업로드 (1:1 권장)</span>
+                                    <span class="text-xs text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-300">나의 로고 업로드</span>
                                 </div>
                                 <input type="file" id="customLogoUpload" accept="image/*" class="hidden">
                             </label>
-                            
-                            <!-- Custom Logo Preview Wrapper -->
-                            <div id="customLogoPreviewWrapper" class="hidden flex justify-center mt-2">
-                                <img id="customLogoPreviewImg" src="" class="w-16 h-16 object-cover rounded-full border-2 border-slate-200 dark:border-slate-700">
-                            </div>
 
-                            <div id="customLogoControlPanel" class="hidden mt-3 p-2 bg-slate-50 dark:bg-black/20 rounded-xl border border-slate-200 dark:border-slate-700 flex justify-end">
-                                <button type="button" id="btnCustomLogoDelete" class="text-xs text-red-500 hover:bg-red-50 p-1 rounded transition-colors flex items-center gap-1">
+                            <div id="customLogoControlPanel" class="hidden mt-1 p-2 bg-slate-50 dark:bg-black/20 rounded-xl border border-slate-200 dark:border-slate-700 flex justify-between items-center">
+                                <span id="customLogoFileName" class="text-xs text-slate-500 truncate max-w-[150px]"></span>
+                                <button type="button" id="btnCustomLogoDelete" class="text-xs text-red-500 hover:bg-red-50 p-1 rounded transition-colors flex items-center gap-1 flex-shrink-0">
                                     <i class="ph ph-trash"></i> 삭제
                                 </button>
                             </div>
@@ -1067,11 +1063,9 @@
                         state.customLogoDataUrl = settings.customLogoDataUrl;
                         state.customLogoImage = new Image();
                         state.customLogoImage.src = state.customLogoDataUrl;
-                        const previewImg = document.getElementById('customLogoPreviewImg');
-                        const previewWrapper = document.getElementById('customLogoPreviewWrapper');
                         const controlPanel = document.getElementById('customLogoControlPanel');
-                        if (previewImg) previewImg.src = settings.customLogoDataUrl;
-                        if (previewWrapper) previewWrapper.style.display = 'flex';
+                        const fileNameEl = document.getElementById('customLogoFileName');
+                        if (fileNameEl) fileNameEl.innerText = '저장된 로고';
                         if (controlPanel) controlPanel.style.display = 'flex';
                     }
 
@@ -1449,19 +1443,20 @@
             if (!window._logoHandlerReady) {
                 window._logoHandlerReady = true;
                 let customCropper = null;
+                let pendingLogoFileName = '';
                 const cropModal = document.getElementById('crop-modal');
                 const imageToCrop = document.getElementById('image-to-crop');
                 const btnCancelCrop = document.getElementById('btn-cancel-crop');
                 const btnApplyCrop = document.getElementById('btn-apply-crop');
                 const customLogoUploadEl = document.getElementById('customLogoUpload');
-                const customLogoPreviewWrapper = document.getElementById('customLogoPreviewWrapper');
-                const customLogoPreviewImg = document.getElementById('customLogoPreviewImg');
                 const customLogoControlPanel = document.getElementById('customLogoControlPanel');
+                const customLogoFileName = document.getElementById('customLogoFileName');
                 const btnCustomLogoDelete = document.getElementById('btnCustomLogoDelete');
 
                 customLogoUploadEl.addEventListener('change', (e) => {
                     const file = e.target.files[0];
                     if (!file) return;
+                    pendingLogoFileName = file.name;
                     const reader = new FileReader();
                     reader.onload = (event) => {
                         imageToCrop.src = event.target.result;
@@ -1488,9 +1483,8 @@
                     state.customLogoDataUrl = croppedDataUrl;
                     state.customLogoImage = new Image();
                     state.customLogoImage.onload = () => {
-                        customLogoPreviewImg.src = croppedDataUrl;
+                        customLogoFileName.innerText = pendingLogoFileName;
                         customLogoControlPanel.style.display = 'flex';
-                        customLogoPreviewWrapper.style.display = 'flex';
                         cropModal.style.display = 'none';
                         customCropper.destroy();
                         customCropper = null;
@@ -1508,8 +1502,7 @@
                     state.customLogoDataUrl = '';
                     state.customLogoImage = null;
                     customLogoControlPanel.style.display = 'none';
-                    customLogoPreviewWrapper.style.display = 'none';
-                    customLogoPreviewImg.src = '';
+                    customLogoFileName.innerText = '';
                     updateCanvas();
                 });
             }
