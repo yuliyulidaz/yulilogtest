@@ -200,9 +200,14 @@ export function drawContent(ctx, width, height, state) {
 
     if (logoImg && logoImg.complete && logoImg.naturalHeight !== 0) {
         const radius = logoSize / 2;
-        const margin = 60; 
-        const logoX = width - margin - radius;
-        const logoY = height - margin - radius;
+        const margin = 60;
+        const pos = state.logoPosition || 'bottom-right';
+        let logoX, logoY;
+        if (pos.includes('left'))        logoX = margin + radius;
+        else if (pos.includes('center')) logoX = width / 2;
+        else                             logoX = width - margin - radius;
+        if (pos.startsWith('top'))       logoY = margin + radius;
+        else                             logoY = height - margin - radius;
 
         ctx.save();
         ctx.globalAlpha = 0.8;
