@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="ko" class="h-full antialiased">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>발췌 문구 생성기 (Test)</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300&family=Noto+Sans+KR:wght@200&family=Nanum+Myeongjo&family=Nanum+Gothic&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/earlyaccess/kopubbatang.css">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Pretendard Variable', 'Pretendard', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'Roboto', 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'sans-serif'],
+                        serif: ['Noto Serif KR', 'serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                        },
+                        dark: {
+                            bg: '#0f0f11',
+                            panel: '#18181b',
+                            border: '#27272a'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/themes/classic.min.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/pickr.min.js"></script>
+
+    <script type="importmap">
+    {
+      "imports": {
+        "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+        "react/": "https://aistudiocdn.com/react@^19.2.0/",
+        "react": "https://aistudiocdn.com/react@^19.2.0"
+      }
+    }
+    </script>
+
+    <link rel="stylesheet" href="style.css?v=2.0">
+</head>
+<body class="h-full bg-slate-50 dark:bg-zinc-950 text-slate-900 dark:text-slate-100 transition-colors duration-300 overflow-hidden flex flex-col items-center justify-center">
+
+    <div class="w-full h-full max-w-[1200px] mx-auto bg-white dark:bg-dark-panel shadow-2xl flex flex-col border-x border-slate-200 dark:border-zinc-800">
+        
+        <header class="h-14 border-b border-slate-200 dark:border-dark-border flex items-center justify-between px-4 lg:px-6 bg-white dark:bg-dark-panel z-40 flex-shrink-0">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-brand-500/30">
+                    <i class="ph ph-quotes"></i>
+                </div>
+                <h1 class="font-bold text-lg tracking-tight hidden md:block">발췌 문구 생성기</h1>
+            </div>
+            
+            <div class="flex items-center gap-2">
+                <button onclick="toggleDarkMode()" class="w-9 h-9 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all dark-mode-toggle mr-1">
+                    <i class="ph ph-moon text-xl"></i>
+                </button>
+                <button onclick="copyImage()" class="copy-btn md:hidden flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-lg border border-slate-200 dark:border-zinc-700 active:scale-95 transition-transform">
+                    <i class="ph ph-copy text-base"></i>
+                    <span>복사</span>
+                </button>
+                <button onclick="downloadImage()" class="md:hidden flex items-center gap-1.5 px-3 py-1.5 bg-brand-600 text-white text-xs font-bold rounded-lg shadow-sm active:scale-95 transition-transform">
+                    <i class="ph ph-download-simple text-base"></i>
+                    <span>저장</span>
+                </button>
+            </div>
+        </header>
+
+        <main class="flex-1 flex flex-col md:flex-row overflow-hidden relative">
+            
+            <section class="order-1 md:order-2 w-full md:flex-1 h-[40vh] md:h-auto bg-slate-100 dark:bg-[#09090b] relative flex flex-col items-center justify-center p-4 md:p-8 lg:p-12 pattern-grid overflow-hidden flex-shrink-0 z-0 border-b md:border-b-0 border-slate-200 dark:border-zinc-800">
+                
+                <div class="relative w-full h-full flex items-center justify-center">
+                    <div class="relative shadow-[0_20px_60px_-15px_rgba(0,0,0,0.2)] dark:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] transition-all duration-300 transform" id="canvasContainer">
+                        <canvas id="canvas" width="1080" height="1080" class="max-w-full max-h-[35vh] md:max-h-[85vh] object-contain bg-white rounded-sm"></canvas>
+                    </div>
+                </div>
+
+                <div class="hidden md:flex absolute bottom-6 left-1/2 -translate-x-1/2 items-center gap-2 p-1.5 bg-white/90 dark:bg-zinc-800/90 backdrop-blur shadow-xl border border-slate-200 dark:border-zinc-700 rounded-2xl z-20">
+                    <button onclick="downloadImage()" class="flex items-center gap-2 px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-medium transition-transform active:scale-95 shadow-lg shadow-brand-500/20">
+                        <i class="ph ph-download-simple text-lg"></i>
+                        <span>저장</span>
+                    </button>
+                    <div id="desktop-action-divider" class="w-px h-6 bg-slate-200 dark:bg-zinc-600 mx-1"></div>
+                    <button onclick="copyImage()" class="copy-btn p-2.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-zinc-700 rounded-xl transition-colors" title="복사">
+                        <i class="ph ph-copy text-xl"></i>
+                    </button>
+                </div>
+                
+            </section>
+
+            <aside class="order-2 md:order-1 w-full md:w-[400px] lg:w-[420px] bg-white dark:bg-dark-panel border-t md:border-t-0 md:border-r border-slate-200 dark:border-dark-border flex flex-col flex-1 md:flex-none md:h-full z-30 md:shadow-none relative overflow-hidden" id="sidebar">
+                
+                <div class="h-full overflow-y-auto custom-scrollbar p-5 space-y-8 pb-10 md:pb-5">
+
+                    <section class="space-y-3">
+                        <h2 class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">내용 입력</h2>
+                        
+                        <div class="flex flex-wrap items-center gap-2">
+                             <button onclick="toggleIndentation()" id="btn-indent" class="flex items-center gap-1 text-[10px] font-medium text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors py-1 px-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
+                                <i class="ph ph-text-indent" id="icon-indent"></i>
+                                <span id="text-indent">들여쓰기 OFF</span>
+                            </button>
+                            
+                            <button onclick="toggleQuoteStyle()" id="btn-quote-toggle" class="flex items-center gap-1 text-[10px] font-medium text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors py-1 px-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
+                                <i class="ph ph-quotes"></i>
+                                <span id="text-quote-toggle">둥근 따옴표 자동 변환</span>
+                            </button>
+
+                             <button onclick="openMobileEditor()" class="md:hidden text-[10px] text-brand-600 hover:text-brand-700 font-medium flex items-center gap-1 bg-brand-50 border border-brand-100 px-2.5 py-1 rounded-lg">
+                                <i class="ph ph-arrows-out-simple"></i> 크게 입력
+                            </button>
+
+                            <button onclick="toggleDesktopEditorSize()" id="btn-expand-editor" class="hidden md:flex text-[10px] text-brand-600 hover:text-brand-700 font-medium items-center gap-1 bg-brand-50 hover:bg-brand-100 dark:bg-brand-900/30 dark:hover:bg-brand-900/50 border border-brand-100 dark:border-brand-800 px-2.5 py-1 rounded-lg transition-colors group" title="입력창 크기 조절">
+                                <i class="ph ph-arrows-vertical" id="icon-expand"></i>
+                                <span>크게 입력</span>
+                            </button>
+
+                            <button onclick="clearQuoteTextOnly()" class="text-red-500 hover:text-red-600 flex items-center justify-center bg-red-50 hover:bg-red-100 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30 w-[26px] h-[26px] rounded-lg transition-colors ml-auto" title="지우기">
+                                <i class="ph ph-trash text-sm"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="relative group">
+                            <textarea id="quote" placeholder="여기에 문구를 입력하세요..." class="w-full h-32 p-4 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded-xl resize-y focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 transition-all text-sm leading-relaxed placeholder:text-slate-400 overflow-y-auto overscroll-y-contain"></textarea>
+                            <div class="absolute bottom-3 right-3 text-slate-400 pointer-events-none">
+                                <i class="ph ph-pencil-simple"></i>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="space-y-1.5">
+                                <label class="text-xs font-medium text-slate-500">제작자</label>
+                                <input type="text" id="author" placeholder="제작자 (선택)" class="w-full px-3 py-2.5 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 transition-all">
+                            </div>
+                            <div class="space-y-1.5">
+                                <label class="text-xs font-medium text-slate-500">캐릭터/제목</label>
+                                <input type="text" id="title" placeholder="캐릭터/제목 (선택)" class="w-full px-3 py-2.5 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 transition-all">
+                            </div>
+                        </div>
+                    </section>
+
+                    <hr class="border-slate-100 dark:border-slate-800">
+
+                    <section class="space-y-4">
+                        <h2 class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">캔버스 비율</h2>
+                        
+                        <div class="grid grid-cols-3 gap-3">
+                            <button onclick="setRatio('1:1')" id="btn-ratio-1-1" class="ratio-btn flex flex-col items-center justify-center gap-2 p-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all bg-brand-50 dark:bg-slate-800 border-brand-500 dark:border-slate-500 ring-1 ring-brand-500 dark:ring-slate-500">
+                                <div class="w-6 h-6 border-2 border-current rounded-sm"></div>
+                                <span class="text-[10px] font-medium">1:1</span>
+                            </button>
+                            <button onclick="setRatio('4:5')" id="btn-ratio-4-5" class="ratio-btn flex flex-col items-center justify-center gap-2 p-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
+                                <div class="w-5 h-6 border-2 border-current rounded-sm"></div>
+                                <span class="text-[10px] font-medium">4:5</span>
+                            </button>
+                            <button onclick="setRatio('16:9')" id="btn-ratio-16-9" class="ratio-btn flex flex-col items-center justify-center gap-2 p-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
+                                <div class="w-8 h-5 border-2 border-current rounded-sm mt-1 mb-0.5"></div>
+                                <span class="text-[10px] font-medium">16:9</span>
+                            </button>
+                        </div>
+                    </section>
+
+                    <hr class="border-slate-100 dark:border-slate-800">
+
+                    <section class="space-y-4">
+                        <h2 class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">텍스트 스타일</h2>
+                        
+                        <div class="space-y-2">
+                            <div class="grid grid-cols-3 gap-2">
+                                <button onclick="setFont('Noto Serif KR')" class="font-btn p-2 text-xs border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-all active-font" data-font="Noto Serif KR" style="font-family: 'Noto Serif KR', serif;">Noto Serif</button>
+                                <button onclick="setFont('KoPub Batang')" class="font-btn p-2 text-xs border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-all" data-font="KoPub Batang" style="font-family: 'KoPub Batang', serif;">KoPub 바탕</button>
+                                <button onclick="setFont('Nanum Myeongjo')" class="font-btn p-2 text-xs border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-all" data-font="Nanum Myeongjo" style="font-family: 'Nanum Myeongjo', serif;">나눔명조</button>
+                            </div>
+                            <div class="grid grid-cols-3 gap-2">
+                                <button onclick="setFont('Pretendard')" class="font-btn p-2 text-xs border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-all" data-font="Pretendard" style="font-family: 'Pretendard', sans-serif;">Pretendard</button>
+                                <button onclick="setFont('Noto Sans KR')" class="font-btn p-2 text-xs border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-all" data-font="Noto Sans KR" style="font-family: 'Noto Sans KR', sans-serif;">Noto Sans</button>
+                                <button onclick="setFont('Nanum Gothic')" class="font-btn p-2 text-xs border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-all" data-font="Nanum Gothic" style="font-family: 'Nanum Gothic', sans-serif;">나눔고딕</button>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="bg-slate-50 dark:bg-black/20 p-1 rounded-lg flex border border-slate-200 dark:border-slate-700">
+                                <label class="flex-1 cursor-pointer">
+                                    <input type="radio" name="align" value="left" checked class="peer hidden" id="align-left">
+                                    <div class="w-full h-8 flex items-center justify-center rounded text-slate-400 peer-checked:bg-white dark:peer-checked:bg-slate-700 peer-checked:text-brand-600 peer-checked:shadow-sm transition-all">
+                                        <i class="ph ph-text-align-left text-lg"></i>
+                                    </div>
+                                </label>
+                                <label class="flex-1 cursor-pointer">
+                                    <input type="radio" name="align" value="center" class="peer hidden" id="align-center">
+                                    <div class="w-full h-8 flex items-center justify-center rounded text-slate-400 peer-checked:bg-white dark:peer-checked:bg-slate-700 peer-checked:text-brand-600 peer-checked:shadow-sm transition-all">
+                                        <i class="ph ph-text-align-center text-lg"></i>
+                                    </div>
+                                </label>
+                                <label class="flex-1 cursor-pointer">
+                                    <input type="radio" name="align" value="right" class="peer hidden" id="align-right">
+                                    <div class="w-full h-8 flex items-center justify-center rounded text-slate-400 peer-checked:bg-white dark:peer-checked:bg-slate-700 peer-checked:text-brand-600 peer-checked:shadow-sm transition-all">
+                                        <i class="ph ph-text-align-right text-lg"></i>
+                                    </div>
+                                </label>
+                                <label class="flex-1 cursor-pointer">
+                                    <input type="radio" name="align" value="justify" class="peer hidden" id="align-justify">
+                                    <div class="w-full h-8 flex items-center justify-center rounded text-slate-400 peer-checked:bg-white dark:peer-checked:bg-slate-700 peer-checked:text-brand-600 peer-checked:shadow-sm transition-all">
+                                        <i class="ph ph-text-align-justify text-lg"></i>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div class="bg-slate-50 dark:bg-black/20 p-1 rounded-lg flex border border-slate-200 dark:border-slate-700">
+                                 <label class="flex-1 cursor-pointer">
+                                    <input type="radio" name="linebreak" value="char" checked class="peer hidden" id="linebreak-char">
+                                    <div class="w-full h-8 flex items-center justify-center rounded text-xs font-medium text-slate-400 peer-checked:bg-white dark:peer-checked:bg-slate-700 peer-checked:text-brand-600 peer-checked:shadow-sm transition-all">
+                                        글자
+                                    </div>
+                                </label>
+                                <label class="flex-1 cursor-pointer">
+                                    <input type="radio" name="linebreak" value="word" class="peer hidden" id="linebreak-word">
+                                    <div class="w-full h-8 flex items-center justify-center rounded text-xs font-medium text-slate-400 peer-checked:bg-white dark:peer-checked:bg-slate-700 peer-checked:text-brand-600 peer-checked:shadow-sm transition-all">
+                                        단어
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="md:hidden space-y-2 pt-2">
+                             <div id="mobile-tip-container" class="text-center transition-opacity duration-300 opacity-70">
+                                <p class="text-[10px] text-brand-600 dark:text-brand-400 flex items-center justify-center gap-1 font-medium bg-brand-50 dark:bg-brand-900/30 py-1 px-2 rounded-full inline-flex">
+                                    <i class="ph ph-lightbulb text-brand-500"></i>
+                                    <span>Tip: 버튼을 꾹 누르면 빠르게 조절돼요</span>
+                                </p>
+                             </div>
+
+                             <div class="grid grid-cols-2 gap-3">
+                                <div class="bg-slate-50 dark:bg-black/20 p-3 rounded-xl border border-slate-200 dark:border-slate-700 flex flex-col justify-between">
+                                    <label class="text-xs font-medium text-slate-500 mb-2">글자 크기</label>
+                                    <div class="flex items-center justify-between bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-1">
+                                        <button id="btn-minus-fontSize" class="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-brand-600 rounded select-none"><i class="ph ph-minus"></i></button>
+                                        <div class="flex items-center gap-0.5">
+                                            <input type="number" id="input-mobile-fontSize" class="text-brand-600 text-sm">
+                                            <span class="text-xs text-slate-400 font-medium">px</span>
+                                        </div>
+                                        <button id="btn-plus-fontSize" class="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-brand-600 rounded select-none"><i class="ph ph-plus"></i></button>
+                                    </div>
+                                </div>
+                                <div class="bg-slate-50 dark:bg-black/20 p-3 rounded-xl border border-slate-200 dark:border-slate-700 flex flex-col justify-between">
+                                    <label class="text-xs font-medium text-slate-500 mb-2">줄 간격</label>
+                                    <div class="flex items-center justify-between bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-1">
+                                        <button id="btn-minus-lineHeight" class="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-brand-600 rounded select-none"><i class="ph ph-minus"></i></button>
+                                        <div class="flex items-center gap-0.5">
+                                            <input type="number" id="input-mobile-lineHeight" class="text-brand-600 text-sm" step="0.1">
+                                            <span class="text-xs text-slate-400 font-medium">x</span>
+                                        </div>
+                                        <button id="btn-plus-lineHeight" class="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-brand-600 rounded select-none"><i class="ph ph-plus"></i></button>
+                                    </div>
+                                </div>
+                                <div class="bg-slate-50 dark:bg-black/20 p-3 rounded-xl border border-slate-200 dark:border-slate-700 flex flex-col justify-between">
+                                    <label class="text-xs font-medium text-slate-500 mb-2">문단 간격</label>
+                                    <div class="flex items-center justify-between bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-1">
+                                        <button id="btn-minus-paraSpacing" class="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-brand-600 rounded select-none"><i class="ph ph-minus"></i></button>
+                                        <div class="flex items-center gap-0.5">
+                                            <input type="number" id="input-mobile-paraSpacing" class="text-brand-600 text-sm">
+                                            <span class="text-xs text-slate-400 font-medium">px</span>
+                                        </div>
+                                        <button id="btn-plus-paraSpacing" class="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-brand-600 rounded select-none"><i class="ph ph-plus"></i></button>
+                                    </div>
+                                </div>
+                                <div class="bg-slate-50 dark:bg-black/20 p-3 rounded-xl border border-slate-200 dark:border-slate-700 flex flex-col justify-between">
+                                    <label class="text-xs font-medium text-slate-500 mb-2">여백</label>
+                                    <div class="flex items-center justify-between bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-1">
+                                        <button id="btn-minus-padding" class="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-brand-600 rounded select-none"><i class="ph ph-minus"></i></button>
+                                        <div class="flex items-center gap-0.5">
+                                            <input type="number" id="input-mobile-padding" class="text-brand-600 text-sm">
+                                            <span class="text-xs text-slate-400 font-medium">px</span>
+                                        </div>
+                                        <button id="btn-plus-padding" class="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-brand-600 rounded select-none"><i class="ph ph-plus"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="hidden md:block space-y-5 pt-2">
+                            <div class="relative">
+                                <div class="flex justify-between text-xs mb-2">
+                                    <span class="text-slate-500">글자 크기</span>
+                                    <span class="font-mono text-brand-600"><span id="fontSizeValue">42</span>px</span>
+                                </div>
+                                <input type="range" id="fontSize" min="30" max="80" value="42" class="w-full">
+                            </div>
+                            <div class="relative">
+                                <div class="flex justify-between text-xs mb-2">
+                                    <span class="text-slate-500">줄 간격</span>
+                                    <span class="font-mono text-brand-600"><span id="lineHeightValue">1.5</span>x</span>
+                                </div>
+                                <input type="range" id="lineHeight" min="1.2" max="2.0" step="0.1" value="1.5" class="w-full">
+                            </div>
+                            <div class="relative">
+                                <div class="flex justify-between text-xs mb-2">
+                                    <span class="text-slate-500">문단 간격</span>
+                                    <span class="font-mono text-brand-600"><span id="paraSpacingValue">0</span>px</span>
+                                </div>
+                                <input type="range" id="paraSpacing" min="0" max="100" value="0" class="w-full">
+                            </div>
+                            <div class="relative">
+                                <div class="flex justify-between text-xs mb-2">
+                                    <span class="text-slate-500">여백</span>
+                                    <span class="font-mono text-brand-600"><span id="paddingValue">100</span>px</span>
+                                </div>
+                                <input type="range" id="padding" min="50" max="200" step="10" value="100" class="w-full">
+                            </div>
+                        </div>
+                    </section>
+
+                    <hr class="border-slate-100 dark:border-slate-800">
+
+                    <section class="space-y-4">
+                        <h2 class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">배경 및 스타일</h2>
+                        
+                        <div class="space-y-4">
+                            <div class="space-y-2">
+                                <label class="text-xs font-medium text-slate-500">글자 색상</label>
+                                <div class="relative w-full h-10 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
+                                    <div id="textColorPicker"></div>
+                                </div>
+                            </div>
+
+                            <div class="bg-slate-50 dark:bg-black/20 p-1 rounded-lg flex border border-slate-200 dark:border-slate-700">
+                                <label class="flex-1 cursor-pointer">
+                                    <input type="radio" name="bgMode" value="solid" class="peer hidden">
+                                    <div class="w-full h-8 flex items-center justify-center rounded text-xs font-medium text-slate-400 peer-checked:bg-white dark:peer-checked:bg-slate-700 peer-checked:text-brand-600 peer-checked:shadow-sm transition-all">
+                                        단색
+                                    </div>
+                                </label>
+                                <label class="flex-1 cursor-pointer">
+                                    <input type="radio" name="bgMode" value="gradient" checked class="peer hidden">
+                                    <div class="w-full h-8 flex items-center justify-center rounded text-xs font-medium text-slate-400 peer-checked:bg-white dark:peer-checked:bg-slate-700 peer-checked:text-brand-600 peer-checked:shadow-sm transition-all">
+                                        그라데이션
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div id="solidColorPanel" class="space-y-2 hidden">
+                                <label class="text-xs font-medium text-slate-500">배경 색상</label>
+                                <div class="relative w-full h-10 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
+                                    <div id="bgColorMainPicker"></div>
+                                </div>
+                            </div>
+
+                            <div id="gradientColorPanel" class="space-y-3">
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div class="space-y-2">
+                                        <label class="text-xs font-medium text-slate-500">시작 색상</label>
+                                        <div class="relative w-full h-10 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
+                                            <div id="gradStartColorPicker"></div>
+                                        </div>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-xs font-medium text-slate-500">끝 색상</label>
+                                        <div class="relative w-full h-10 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
+                                            <div id="gradEndColorPicker"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="text-xs font-medium text-slate-500">방향</label>
+                                    <div class="grid grid-cols-4 gap-2">
+                                        <button onclick="setDirection('to bottom')" class="dir-btn h-9 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex items-center justify-center text-slate-500" data-dir="to bottom" title="상 → 하"><i class="ph ph-arrow-down"></i></button>
+                                        <button onclick="setDirection('to top')" class="dir-btn h-9 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex items-center justify-center text-slate-500" data-dir="to top" title="하 → 상"><i class="ph ph-arrow-up"></i></button>
+                                        <button onclick="setDirection('to right')" class="dir-btn h-9 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex items-center justify-center text-slate-500" data-dir="to right" title="좌 → 우"><i class="ph ph-arrow-right"></i></button>
+                                        <button onclick="setDirection('to left')" class="dir-btn h-9 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex items-center justify-center text-slate-500" data-dir="to left" title="우 → 좌"><i class="ph ph-arrow-left"></i></button>
+                                        <button onclick="setDirection('to bottom right')" class="dir-btn h-9 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex items-center justify-center text-slate-500 active-dir bg-brand-50 dark:bg-slate-800 border-brand-500 dark:border-slate-500 text-brand-600 dark:text-brand-400" data-dir="to bottom right" title="좌상 → 우하"><i class="ph ph-arrow-down-right"></i></button>
+                                        <button onclick="setDirection('to top right')" class="dir-btn h-9 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex items-center justify-center text-slate-500" data-dir="to top right" title="좌하 → 우상"><i class="ph ph-arrow-up-right"></i></button>
+                                        <button onclick="setDirection('to bottom left')" class="dir-btn h-9 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex items-center justify-center text-slate-500" data-dir="to bottom left" title="우상 → 좌하"><i class="ph ph-arrow-down-left"></i></button>
+                                        <button onclick="setDirection('to top left')" class="dir-btn h-9 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex items-center justify-center text-slate-500" data-dir="to top left" title="우하 → 좌상"><i class="ph ph-arrow-up-left"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="pt-1">
+                            <div id="gradientPalette" class="flex gap-2 overflow-x-auto no-scrollbar py-1">
+                                <button onclick="setPreset('gradient', '#ec4447', '#8c5af2', '#ffffff')" class="w-8 h-8 rounded-full border border-slate-200 shadow-sm flex-shrink-0" style="background: linear-gradient(to bottom right, #ec4447, #8c5af2)" title="Neon Sunset"></button>
+                                <button onclick="setPreset('gradient', '#a18cd1', '#fbc2eb', '#4A4A4A')" class="w-8 h-8 rounded-full border border-slate-200 shadow-sm flex-shrink-0" style="background: linear-gradient(to bottom right, #a18cd1, #fbc2eb)" title="Dreamy Purple"></button>
+                                <button onclick="setPreset('gradient', '#0f2027', '#203a43', '#ffffff')" class="w-8 h-8 rounded-full border border-slate-200 shadow-sm flex-shrink-0" style="background: linear-gradient(to bottom right, #0f2027, #2c5364)" title="Deep Sea"></button>
+                                <button onclick="setPreset('gradient', '#232526', '#414345', '#ffffff')" class="w-8 h-8 rounded-full border border-slate-200 shadow-sm flex-shrink-0" style="background: linear-gradient(to bottom right, #232526, #414345)" title="Midnight"></button>
+                                <button onclick="setPreset('gradient', '#4b1248', '#f0c27b', '#ffffff')" class="w-8 h-8 rounded-full border border-slate-200 shadow-sm flex-shrink-0" style="background: linear-gradient(to bottom right, #4b1248, #f0c27b)" title="Sunset"></button>
+                                <button onclick="setPreset('gradient', '#141E30', '#243B55', '#ffffff')" class="w-8 h-8 rounded-full border border-slate-200 shadow-sm flex-shrink-0" style="background: linear-gradient(to bottom right, #141E30, #243B55)" title="Royal Blue"></button>
+                                <button onclick="setPreset('gradient', '#1a2a6c', '#b21f1f', '#ffffff')" class="w-8 h-8 rounded-full border border-slate-200 shadow-sm flex-shrink-0" style="background: linear-gradient(to bottom right, #1a2a6c, #b21f1f)" title="Mystic"></button>
+                                <button onclick="setPreset('gradient', '#000000', '#434343', '#ffffff')" class="w-8 h-8 rounded-full border border-slate-200 shadow-sm flex-shrink-0" style="background: linear-gradient(to bottom right, #000000, #434343)" title="Charcoal"></button>
+                            </div>
+                            
+                            <div id="solidPalette" class="flex gap-2 overflow-x-auto no-scrollbar py-1 hidden">
+                                <button onclick="setPreset('solid', '#E6E6FA', null, '#000000')" class="w-8 h-8 rounded-full bg-[#E6E6FA] border border-slate-200 shadow-sm flex-shrink-0" title="Lavender"></button>
+                                <button onclick="setPreset('solid', '#000000', null, '#ffffff')" class="w-8 h-8 rounded-full bg-black border border-slate-200 shadow-sm flex-shrink-0" title="Black"></button>
+                                <button onclick="setPreset('solid', '#1a1a1a', null, '#ffffff')" class="w-8 h-8 rounded-full bg-[#1a1a1a] border border-slate-200 shadow-sm flex-shrink-0" title="Dark Gray"></button>
+                                <button onclick="setPreset('solid', '#1e293b', null, '#ffffff')" class="w-8 h-8 rounded-full bg-[#1e293b] border border-slate-200 shadow-sm flex-shrink-0" title="Slate"></button>
+                                <button onclick="setPreset('solid', '#312e81', null, '#ffffff')" class="w-8 h-8 rounded-full bg-[#312e81] border border-slate-200 shadow-sm flex-shrink-0" title="Indigo"></button>
+                                <button onclick="setPreset('solid', '#4a044e', null, '#ffffff')" class="w-8 h-8 rounded-full bg-[#4a044e] border border-slate-200 shadow-sm flex-shrink-0" title="Fuchsia"></button>
+                                <button onclick="setPreset('solid', '#365314', null, '#ffffff')" class="w-8 h-8 rounded-full bg-[#365314] border border-slate-200 shadow-sm flex-shrink-0" title="Olive"></button>
+                                <button onclick="setPreset('solid', '#881337', null, '#ffffff')" class="w-8 h-8 rounded-full bg-[#881337] border border-slate-200 shadow-sm flex-shrink-0" title="Rose"></button>
+                            </div>
+                        </div>
+
+                        <div class="pt-2">
+                            <label class="flex items-center justify-center w-full h-24 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl hover:border-brand-500 dark:hover:border-brand-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer group">
+                                <div class="text-center">
+                                    <div class="text-slate-400 group-hover:text-brand-500 transition-colors mb-1">
+                                        <i class="ph ph-image text-2xl"></i>
+                                    </div>
+                                    <span class="text-xs text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-300">배경 이미지 업로드</span>
+                                </div>
+                                <input type="file" id="bgImageUpload" accept="image/*" class="hidden">
+                            </label>
+                            
+                            <div id="imageControlPanel" class="hidden mt-3 p-3 bg-slate-50 dark:bg-black/20 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3">
+                                <div class="flex justify-between items-center">
+                                    <span id="imageFileName" class="text-xs text-slate-500 truncate max-w-[150px]"></span>
+                                    <button id="btnImageDelete" onclick="deleteBackgroundImage()" class="text-xs text-red-500 hover:bg-red-50 p-1 rounded transition-colors"><i class="ph ph-trash"></i> 삭제</button>
+                                </div>
+                                
+                                <div id="imageOptions" class="space-y-3">
+                                    <div class="flex bg-white dark:bg-slate-800 rounded-lg p-1 border border-slate-200 dark:border-slate-700">
+                                        <label class="flex-1 cursor-pointer text-center">
+                                            <input type="radio" name="imageFit" value="cover" checked class="peer hidden" id="fit-cover">
+                                            <span class="block text-xs py-1 rounded text-slate-500 peer-checked:bg-brand-50 peer-checked:text-brand-600 font-medium">채우기</span>
+                                        </label>
+                                        <label class="flex-1 cursor-pointer text-center">
+                                            <input type="radio" name="imageFit" value="contain" class="peer hidden" id="fit-contain">
+                                            <span class="block text-xs py-1 rounded text-slate-500 peer-checked:bg-brand-50 peer-checked:text-brand-600 font-medium">맞추기</span>
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="grid grid-cols-3 gap-1 max-w-[120px] mx-auto">
+                                        <label class="aspect-square cursor-pointer"><input type="radio" name="imagePosition" value="top-left" class="peer hidden"><div class="w-full h-full border border-slate-200 rounded hover:bg-slate-100 peer-checked:bg-brand-500 peer-checked:border-brand-500"></div></label>
+                                        <label class="aspect-square cursor-pointer"><input type="radio" name="imagePosition" value="top-center" class="peer hidden"><div class="w-full h-full border border-slate-200 rounded hover:bg-slate-100 peer-checked:bg-brand-500 peer-checked:border-brand-500"></div></label>
+                                        <label class="aspect-square cursor-pointer"><input type="radio" name="imagePosition" value="top-right" class="peer hidden"><div class="w-full h-full border border-slate-200 rounded hover:bg-slate-100 peer-checked:bg-brand-500 peer-checked:border-brand-500"></div></label>
+                                        
+                                        <label class="aspect-square cursor-pointer"><input type="radio" name="imagePosition" value="middle-left" class="peer hidden"><div class="w-full h-full border border-slate-200 rounded hover:bg-slate-100 peer-checked:bg-brand-500 peer-checked:border-brand-500"></div></label>
+                                        <label class="aspect-square cursor-pointer"><input type="radio" name="imagePosition" value="middle-center" checked class="peer hidden"><div class="w-full h-full border border-slate-200 rounded hover:bg-slate-100 peer-checked:bg-brand-500 peer-checked:border-brand-500"></div></label>
+                                        <label class="aspect-square cursor-pointer"><input type="radio" name="imagePosition" value="middle-right" class="peer hidden"><div class="w-full h-full border border-slate-200 rounded hover:bg-slate-100 peer-checked:bg-brand-500 peer-checked:border-brand-500"></div></label>
+                                        
+                                        <label class="aspect-square cursor-pointer"><input type="radio" name="imagePosition" value="bottom-left" class="peer hidden"><div class="w-full h-full border border-slate-200 rounded hover:bg-slate-100 peer-checked:bg-brand-500 peer-checked:border-brand-500"></div></label>
+                                        <label class="aspect-square cursor-pointer"><input type="radio" name="imagePosition" value="bottom-center" class="peer hidden"><div class="w-full h-full border border-slate-200 rounded hover:bg-slate-100 peer-checked:bg-brand-500 peer-checked:border-brand-500"></div></label>
+                                        <label class="aspect-square cursor-pointer"><input type="radio" name="imagePosition" value="bottom-right" class="peer hidden"><div class="w-full h-full border border-slate-200 rounded hover:bg-slate-100 peer-checked:bg-brand-500 peer-checked:border-brand-500"></div></label>
+                                    </div>
+                                    
+                                    <div class="relative pt-2">
+                                         <div class="flex justify-between text-xs mb-1">
+                                            <span class="text-slate-500">이미지 크기</span>
+                                            <span class="font-mono text-brand-600"><span id="scaleValue">100</span>%</span>
+                                        </div>
+                                        <input type="range" id="bgImageScale" min="10" max="200" value="100" class="w-full">
+                                    </div>
+
+                                    <div class="relative">
+                                         <div class="flex justify-between text-xs mb-1">
+                                            <span class="text-slate-500">오버레이</span>
+                                            <span class="font-mono text-brand-600" id="overlayValueText">원본</span>
+                                        </div>
+                                        <input type="range" id="overlayOpacity" min="-80" max="80" value="0" class="w-full">
+                                        <div class="flex justify-between text-[10px] text-slate-400 mt-1 px-1">
+                                            <span>밝게</span>
+                                            <span>원본</span>
+                                            <span>어둡게</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <hr class="border-slate-100 dark:border-slate-800">
+
+                    <section class="space-y-4">
+                        <h2 class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">로고 설정</h2>
+                        
+                         <div class="space-y-2">
+                            <label class="text-xs font-medium text-slate-500">플랫폼 로고</label>
+                            <select id="platformSelect" class="w-full appearance-none px-3 py-2.5 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                <option value="">선택 안함</option>
+                                <option value="dokiChat">도키챗</option>
+                                <option value="luvDuv">러비더비</option>
+                                <option value="reppley">레플리</option>
+                                <option value="rplay">로맨틱플레이</option>
+                                <option value="ropanAI">로판AI</option>
+                                <option value="melting">멜팅</option>
+                                <option value="bloom">블룸</option>
+                                <option value="inkChat">잉크챗</option>
+                                <option value="zeta">제타</option>
+                                <option value="carat">캐럿</option>
+                                <option value="chemi">케밍</option>
+                                <option value="caveDuck">케이브덕</option>
+                                <option value="crack">크랙</option>
+                                <option value="pulse">펄스</option>
+                                <option value="Fizzchat">피즈챗</option>
+                                <option value="whif">WHIF</option> 
+                            </select>
+                        </div>
+
+                        <div class="space-y-1">
+                             <div class="flex justify-between text-xs mb-1">
+                                <span class="text-slate-500">로고 크기</span>
+                                <span class="font-mono text-brand-600"><span id="logoSizeValue">80</span>px</span>
+                            </div>
+                            <input type="range" id="logoSize" min="50" max="200" step="10" value="80" class="w-full">
+                        </div>
+                    </section>
+                    
+                    <footer class="mt-8 pt-8 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-400 dark:text-slate-500 space-y-4 pb-8">
+                        <a href="https://yuliyulidaz.github.io/yulipage/" target="_blank" class="block w-full p-3 bg-brand-50/50 dark:bg-brand900/10 border border-brand-100 dark:border-brand-800/30 rounded-xl hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-all group">
+                            <div class="flex items-center gap-2 text-brand-600 dark:text-brand-400 font-bold mb-0.5">
+                                <i class="ph ph-file-text text-lg"></i>
+                                <span>내지 생성기</span>
+                            </div>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300">소설 내지 이미지가 필요하신가요? 여기서 만들어보세요.</p>
+                        </a>
+                        
+                        <div>
+                            <h3 class="font-bold text-slate-500 dark:text-slate-400 mb-1">📖 발췌 문구 생성기 v1.4.3</h3>
+                            <p>본 사이트는 어떠한 개인정보도 수집하지 않습니다.<br>모든 작업은 귀하의 브라우저에서만 이루어집니다.</p>
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <h4 class="font-bold text-slate-500 dark:text-slate-400">⚠️ 이용 시 주의사항</h4>
+                            <ul class="list-disc list-outside pl-3 space-y-1 text-[11px] leading-relaxed">
+                                <li><strong>저작권 책임:</strong> 업로드한 이미지 및 텍스트의 저작권은 사용자에게 있으며, 저작권 침해에 대한 모든 법적 책임은 사용자에게 있습니다.</li>
+                                <li><strong>이미지 사용:</strong> 타인의 저작물(사진, 일러스트 등)을 무단으로 사용하지 마세요. 저작권자의 허락을 받거나 저작권이 없는 이미지만 사용하세요.</li>
+                                <li><strong>텍스트 인용:</strong> 책이나 기타 저작물의 텍스트를 발췌할 경우, 저작권법상 허용 범위 내에서 사용하고 출처를 명시하세요.</li>
+                                <li><strong>플랫폼 로고:</strong> 각 플랫폼의 로고는 해당 플랫폼의 상표이며, 사용 시 각 플랫폼의 브랜드 가이드라인을 준수해야 합니다.</li>
+                                <li><strong>상업적 이용:</strong> 생성된 이미지는 상업적으로 사용할 수 없습니다.</li>
+                            </ul>
+                            <p class="text-[10px] pt-1">본 도구의 제작자는 사용자가 생성한 콘텐츠에 대해 어떠한 책임도 지지 않습니다.<br>이미지 및 텍스트 사용으로 인해 발생하는 모든 법적 문제는 사용자 본인의 책임입니다.</p>
+                        </div>
+                    </footer>
+                </div>
+                
+            </aside>
+
+        </main>
+    </div>
+
+    <div id="mobile-editor-modal" class="fixed inset-0 z-[100] bg-white dark:bg-zinc-950 hidden-modal flex flex-col">
+        <div class="h-14 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between px-4 bg-white dark:bg-zinc-950 flex-shrink-0">
+            <span class="font-bold text-lg text-slate-800 dark:text-slate-100">텍스트 입력</span>
+            <button onclick="closeMobileEditor()" class="flex items-center gap-1.5 px-3 py-1.5 bg-brand-600 text-white text-sm font-bold rounded-lg shadow-sm active:scale-95 transition-transform">
+                <i class="ph ph-check text-lg"></i>
+                <span>완료</span>
+            </button>
+        </div>
+        
+        <div class="flex-1 overflow-y-auto p-4 space-y-6">
+            <div class="space-y-2">
+                <label class="text-sm font-medium text-slate-500">본문 내용</label>
+                <textarea id="mobile-quote-input" class="w-full h-64 p-4 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-brand-500/50 transition-all text-base leading-relaxed placeholder:text-slate-400" placeholder="여기에 문구를 입력하세요..."></textarea>
+            </div>
+            
+            <div class="space-y-4">
+                <div class="space-y-2">
+                    <label class="text-sm font-medium text-slate-500">제작자</label>
+                    <input type="text" id="mobile-author-input" class="w-full px-4 py-3 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-brand-500/50 transition-all" placeholder="제작자">
+                </div>
+                <div class="space-y-2">
+                    <label class="text-sm font-medium text-slate-500">캐릭터/제목</label>
+                    <input type="text" id="mobile-title-input" class="w-full px-4 py-3 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-brand-500/50 transition-all" placeholder="캐릭터/제목">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="main.js?v=2.1"></script>
+</body>
+</html>

@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="ko" class="h-full antialiased">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
+    <title>발췌 문구 생성기 (Mobile)</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300&family=Noto+Sans+KR:wght@200&family=Nanum+Myeongjo&family=Nanum+Gothic&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/earlyaccess/kopubbatang.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/themes/classic.min.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/pickr.min.js"></script>
+    <link rel="stylesheet" href="style.css?v=2.0">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Pretendard Variable', 'Pretendard', '-apple-system', 'sans-serif'],
+                        serif: ['Noto Serif KR', 'serif'],
+                    },
+                    colors: {
+                        brand: { 50:'#eff6ff', 500:'#3b82f6', 600:'#2563eb' },
+                        dark: { bg:'#000000', panel:'#18181b', border:'#27272a' }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { overscroll-behavior: none; }
+        
+        .tab-btn.active { color: #2563eb; font-weight: 700; }
+        .dark .tab-btn.active { color: #60a5fa; }
+
+        .panel-section { display: none; animation: fadeIn 0.2s ease-out; }
+        .panel-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- 백드롭 --- */
+        #kb-backdrop {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.4); 
+            backdrop-filter: blur(2px);
+            z-index: 40; 
+            display: none; opacity: 0; transition: opacity 0.2s;
+        }
+        body.mode-keyboard #kb-backdrop { display: block; opacity: 1; }
+
+        /* --- 편집 영역 (Bottom Sheet) --- */
+        #edit-area { 
+            position: relative; z-index: 10; 
+        }
+
+        /* ★ [통일됨] 키보드 모드 (본문/제작자/제목 모두 동일하게 동작) ★ */
+        body.mode-keyboard #preview-area { display: flex; filter: blur(2px); opacity: 0.5; pointer-events: none; }
+        body.mode-keyboard #bottom-nav { display: none !important; }
+        
+        body.mode-keyboard #edit-area { 
+            position: fixed; bottom: 0; left: 0; right: 0; 
+            height: 60%; /* 높이 60% 고정 */
+            min-height: 320px; margin-top: 0; 
+            border-radius: 24px 24px 0 0; 
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.2); 
+            z-index: 50; 
+        }
+        
+        /* 키보드 모드일 때 내부 요소 표시 설정 */
+        body.mode-keyboard #keyboard-toolbar { display: flex !important; }
+        body.mode-keyboard #modal-delete-btn { display: flex !important; }
+        
+        /* 스크롤 영역 패딩 조정 */
+        body.mode-keyboard .input-wrapper { padding: 20px 20px 0 20px; }
+        
+        /* 텍스트 영역 높이 조정 (너무 꽉 차지 않게) */
+        body.mode-keyboard #quote { 
+            height: auto !important; 
+            min-height: 150px; /* 적절한 최소 높이 */
+            border: none; font-size: 1.1rem; line-height: 1.6; 
+        }
+
+
+        /* UI 요소 스타일 */
+        #keyboard-toolbar { 
+            display: none; align-items: center; justify-content: flex-end; gap: 8px;
+            padding: 12px 16px; padding-bottom: calc(env(safe-area-inset-bottom) + 12px); 
+            background: white; border-top: 1px solid #f1f5f9; 
+        }
+        .dark #keyboard-toolbar { background: #18181b; border-top-color: #27272a; }
+
+        .kb-tool-btn {
+            display: flex; align-items: center; justify-content: center;
+            padding: 8px 10px; border-radius: 8px;
+            font-size: 13px; font-weight: 500;
+            color: #64748b; transition: all 0.2s;
+        }
+        .dark .kb-tool-btn { color: #a1a1aa; }
+        .kb-tool-btn.active { color: #2563eb; background-color: #eff6ff; }
+        .dark .kb-tool-btn.active { color: #60a5fa; background-color: #1e3a8a; }
+
+        #modal-delete-btn { 
+            display: none; position: absolute; top: 16px; right: 16px; z-index: 1000;
+            color: #ef4444; padding: 8px;
+        }
+
+        .top-menu-bar {
+            display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px;
+            -ms-overflow-style: none; scrollbar-width: none; align-items: center;
+        }
+        .top-menu-bar::-webkit-scrollbar { display: none; }
+
+        .top-menu-btn { 
+            display: flex; align-items: center; gap: 4px; 
+            padding: 4px 8px; border-radius: 6px; 
+            font-size: 11px; font-weight: 600; 
+            color: #64748b; background: #f1f5f9; 
+            flex-shrink: 0;
+        }
+        .dark .top-menu-btn { background: #27272a; color: #a1a1aa; }
+        .top-menu-btn.active { background: #eff6ff; color: #2563eb; border: 1px solid #dbeafe; }
+        .dark .top-menu-btn.active { background: #172554; color: #60a5fa; border-color: #1e40af; }
+        
+        .top-delete-icon {
+            margin-left: auto; color: #ef4444 !important; padding: 4px; 
+            background: transparent !important; border: none !important;
+        }
+
+        .glass-btn { background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.5); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .dark .glass-btn { background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.1); color: white; }
+    </style>
+</head>
+<body class="h-[100dvh] bg-slate-50 dark:bg-black text-slate-900 dark:text-slate-100 flex flex-col overflow-hidden">
+
+    <div id="kb-backdrop" onclick="blurInputs()"></div>
+
+    <div id="preview-area" class="relative w-full h-[45%] flex-shrink-0 bg-slate-100 dark:bg-[#09090b] pattern-grid flex items-center justify-center p-6 transition-all duration-300">
+        <div class="absolute top-4 left-4 z-30 flex flex-col gap-3">
+            <button onclick="toggleSettings()" class="glass-btn w-10 h-10 rounded-full flex items-center justify-center text-slate-700 dark:text-slate-200 active:scale-95 transition-transform z-40">
+                <i class="ph ph-gear text-xl"></i>
+            </button>
+            <div id="settings-menu" class="hidden flex flex-col gap-3 animate-slideDown origin-top">
+                <button onclick="toggleDarkMode()" id="theme-toggle-btn" class="glass-btn w-10 h-10 rounded-full flex items-center justify-center text-slate-700 dark:text-slate-200 active:scale-95 transition-transform"><i class="ph ph-moon text-xl" id="theme-icon"></i></button>
+                <a href="https://yuliyulidaz.github.io/yulipage/" target="_blank" class="glass-btn w-10 h-10 rounded-full flex items-center justify-center text-slate-700 dark:text-slate-200 active:scale-95 transition-transform"><i class="ph ph-file-text text-xl"></i></a>
+                <button onclick="toggleInfoModal()" class="glass-btn w-10 h-10 rounded-full flex items-center justify-center text-slate-700 dark:text-slate-200 active:scale-95 transition-transform"><i class="ph ph-info text-xl"></i></button>
+            </div>
+        </div>
+        <div id="settings-backdrop" onclick="toggleSettings()" class="hidden fixed inset-0 z-20"></div>
+
+        <div class="absolute top-4 right-4 flex gap-2 z-20">
+            <button onclick="copyImage()" class="glass-btn w-10 h-10 rounded-full flex items-center justify-center text-slate-700 dark:text-slate-200 active:scale-95 transition-transform"><i class="ph ph-copy text-xl"></i></button>
+            <button onclick="downloadImage()" class="glass-btn w-10 h-10 rounded-full flex items-center justify-center text-brand-600 dark:text-brand-400 font-bold active:scale-95 transition-transform"><i class="ph ph-download-simple text-xl"></i></button>
+        </div>
+
+        <div class="relative shadow-2xl transition-all duration-300" style="max-height: 100%; max-width: 100%;">
+            <canvas id="canvas" class="max-w-full max-h-full object-contain bg-white rounded-sm" style="max-height: 40vh;"></canvas>
+        </div>
+    </div>
+
+    <div id="edit-area" class="flex-1 bg-white dark:bg-dark-panel relative flex flex-col min-h-0 border-t border-slate-100 dark:border-zinc-800 rounded-t-2xl -mt-4 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+        
+        <button id="modal-delete-btn" onclick="clearQuoteTextOnly()">
+            <i class="ph ph-trash text-xl"></i>
+        </button>
+
+        <div class="flex-1 overflow-y-auto custom-scrollbar p-5 pb-20">
+            
+            <div id="panel-text" class="panel-section active space-y-2 h-full">
+                
+                <div class="top-menu-bar">
+                    <button onclick="toggleIndentation()" id="top-btn-indent" class="top-menu-btn">
+                        <i class="ph ph-text-indent text-sm"></i><span>들여쓰기</span>
+                    </button>
+                    <button onclick="toggleQuoteStyle()" id="top-btn-quote" class="top-menu-btn">
+                        <i class="ph ph-quotes text-sm"></i><span>따옴표변경</span>
+                    </button>
+                    <button onclick="pasteFromClipboard()" class="top-menu-btn">
+                        <i class="ph ph-clipboard-text text-sm"></i><span>붙여넣기</span>
+                    </button>
+                    <button onclick="clearQuoteTextOnly()" class="top-delete-icon">
+                        <i class="ph ph-trash text-base"></i>
+                    </button>
+                </div>
+
+                <div class="input-wrapper relative group">
+                    <textarea id="quote" placeholder="내용을 입력하세요..." class="w-full h-32 p-4 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl resize-none focus:outline-none transition-all text-base leading-relaxed placeholder:text-slate-400"></textarea>
+                </div>
+
+                <div id="keyboard-toolbar">
+                    <div class="flex items-center gap-1 overflow-x-auto no-scrollbar">
+                        <button onclick="toggleIndentation()" id="kb-btn-indent" class="kb-tool-btn flex-shrink-0">
+                            <i class="ph ph-text-indent text-lg mr-1"></i><span class="text-xs">들여쓰기</span>
+                        </button>
+                        <button onclick="toggleQuoteStyle()" id="kb-btn-quote" class="kb-tool-btn flex-shrink-0">
+                            <i class="ph ph-quotes text-lg mr-1"></i><span class="text-xs">따옴표</span>
+                        </button>
+                        <button onclick="pasteFromClipboard()" class="kb-tool-btn flex-shrink-0">
+                            <i class="ph ph-clipboard-text text-lg mr-1"></i><span class="text-xs">붙여넣기</span>
+                        </button>
+                    </div>
+                    <button onclick="blurInputs()" class="bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm px-4 py-1.5 rounded-full shadow-sm active:scale-95 transition-transform flex-shrink-0 ml-auto">완료</button>
+                </div>
+
+                <div id="sub-inputs" class="space-y-4">
+                    <div class="grid grid-cols-2 gap-3">
+                        <input type="text" id="author" placeholder="제작자" class="w-full px-4 py-3 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <input type="text" id="title" placeholder="캐릭터/제목" class="w-full px-4 py-3 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                </div>
+            </div>
+
+            <div id="panel-ratio" class="panel-section space-y-4">
+                 <div class="grid grid-cols-3 gap-3">
+                    <button onclick="setRatio('1:1')" id="btn-ratio-1-1" class="ratio-btn flex flex-col items-center justify-center gap-2 p-4 rounded-xl border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-900"><div class="w-6 h-6 border-2 border-current rounded-sm"></div><span class="text-xs font-medium">1:1</span></button>
+                    <button onclick="setRatio('4:5')" id="btn-ratio-4-5" class="ratio-btn flex flex-col items-center justify-center gap-2 p-4 rounded-xl border border-slate-200 dark:border-zinc-700"><div class="w-5 h-6 border-2 border-current rounded-sm"></div><span class="text-xs font-medium">4:5</span></button>
+                    <button onclick="setRatio('16:9')" id="btn-ratio-16-9" class="ratio-btn flex flex-col items-center justify-center gap-2 p-4 rounded-xl border border-slate-200 dark:border-zinc-700"><div class="w-8 h-5 border-2 border-current rounded-sm mt-1 mb-0.5"></div><span class="text-xs font-medium">16:9</span></button>
+                </div>
+            </div>
+
+            <div id="panel-style" class="panel-section space-y-6">
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-slate-400 uppercase">폰트</label>
+                    <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                        <button onclick="setFont('Noto Serif KR')" class="font-btn flex-shrink-0 px-4 py-2 border rounded-lg text-sm" data-font="Noto Serif KR" style="font-family: 'Noto Serif KR', serif;">명조</button>
+                        <button onclick="setFont('Pretendard')" class="font-btn flex-shrink-0 px-4 py-2 border rounded-lg text-sm" data-font="Pretendard" style="font-family: 'Pretendard', sans-serif;">고딕</button>
+                        <button onclick="setFont('KoPub Batang')" class="font-btn flex-shrink-0 px-4 py-2 border rounded-lg text-sm" data-font="KoPub Batang" style="font-family: 'KoPub Batang', serif;">바탕</button>
+                        <button onclick="setFont('Nanum Myeongjo')" class="font-btn flex-shrink-0 px-4 py-2 border rounded-lg text-sm" data-font="Nanum Myeongjo" style="font-family: 'Nanum Myeongjo', serif;">나눔명조</button>
+                        <button onclick="setFont('Noto Sans KR')" class="font-btn flex-shrink-0 px-4 py-2 border rounded-lg text-sm" data-font="Noto Sans KR" style="font-family: 'Noto Sans KR', sans-serif;">산스</button>
+                    </div>
+                </div>
+                <div class="bg-slate-50 dark:bg-zinc-900 p-1 rounded-lg flex border border-slate-200 dark:border-zinc-700">
+                    <label class="flex-1 text-center"><input type="radio" name="align" value="left" checked class="peer hidden"><span class="block py-2 text-slate-400 peer-checked:bg-white dark:peer-checked:bg-zinc-700 peer-checked:text-brand-600 rounded shadow-sm"><i class="ph ph-text-align-left text-lg"></i></span></label>
+                    <label class="flex-1 text-center"><input type="radio" name="align" value="center" class="peer hidden"><span class="block py-2 text-slate-400 peer-checked:bg-white dark:peer-checked:bg-zinc-700 peer-checked:text-brand-600 rounded shadow-sm"><i class="ph ph-text-align-center text-lg"></i></span></label>
+                    <label class="flex-1 text-center"><input type="radio" name="align" value="right" class="peer hidden"><span class="block py-2 text-slate-400 peer-checked:bg-white dark:peer-checked:bg-zinc-700 peer-checked:text-brand-600 rounded shadow-sm"><i class="ph ph-text-align-right text-lg"></i></span></label>
+                    <label class="flex-1 text-center"><input type="radio" name="align" value="justify" class="peer hidden"><span class="block py-2 text-slate-400 peer-checked:bg-white dark:peer-checked:bg-zinc-700 peer-checked:text-brand-600 rounded shadow-sm"><i class="ph ph-text-align-justify text-lg"></i></span></label>
+                </div>
+                <div class="space-y-4">
+                    <div class="space-y-1"><div class="flex justify-between text-xs text-slate-500"><span>크기</span><span id="fontSizeValue">42</span></div><input type="range" id="fontSize" min="30" max="80" value="42" class="w-full accent-brand-600"></div>
+                    <div class="space-y-1"><div class="flex justify-between text-xs text-slate-500"><span>줄 간격</span><span id="lineHeightValue">1.5</span></div><input type="range" id="lineHeight" min="1.2" max="2.0" step="0.1" value="1.5" class="w-full accent-brand-600"></div>
+                    <div class="space-y-1"><div class="flex justify-between text-xs text-slate-500"><span>여백</span><span id="paddingValue">100</span></div><input type="range" id="padding" min="50" max="200" step="10" value="100" class="w-full accent-brand-600"></div>
+                    <input type="hidden" id="paraSpacing" value="0"><div class="hidden"><input type="radio" name="linebreak" value="char" checked></div>
+                </div>
+            </div>
+
+            <div id="panel-bg" class="panel-section space-y-6">
+                <div class="flex items-center justify-between"><span class="text-sm font-medium">글자 색상</span><div class="w-10 h-10 rounded-full border border-slate-200 overflow-hidden"><div id="textColorPicker"></div></div></div>
+                 <div class="bg-slate-50 dark:bg-zinc-900 p-1 rounded-lg flex border border-slate-200 dark:border-zinc-700">
+                    <label class="flex-1 text-center cursor-pointer"><input type="radio" name="bgMode" value="gradient" checked class="peer hidden"><span class="block py-2 text-xs font-bold text-slate-500 peer-checked:bg-white dark:peer-checked:bg-zinc-700 peer-checked:text-brand-600 rounded shadow-sm">그라데이션</span></label>
+                    <label class="flex-1 text-center cursor-pointer"><input type="radio" name="bgMode" value="solid" class="peer hidden"><span class="block py-2 text-xs font-bold text-slate-500 peer-checked:bg-white dark:peer-checked:bg-zinc-700 peer-checked:text-brand-600 rounded shadow-sm">단색</span></label>
+                </div>
+                <div id="gradientColorPanel" class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1"><span class="text-xs text-slate-500">시작</span><div class="w-full h-10 rounded-lg border border-slate-200 overflow-hidden"><div id="gradStartColorPicker"></div></div></div>
+                    <div class="space-y-1"><span class="text-xs text-slate-500">끝</span><div class="w-full h-10 rounded-lg border border-slate-200 overflow-hidden"><div id="gradEndColorPicker"></div></div></div>
+                </div>
+                <div id="solidColorPanel" class="hidden"><div class="w-full h-10 rounded-lg border border-slate-200 overflow-hidden"><div id="bgColorMainPicker"></div></div></div>
+                <label class="flex flex-col items-center justify-center w-full h-20 border-2 border-dashed border-slate-300 dark:border-zinc-700 rounded-xl hover:border-brand-500 bg-slate-50 dark:bg-zinc-900 cursor-pointer">
+                    <i class="ph ph-image text-2xl text-slate-400"></i><span class="text-xs text-slate-500 mt-1">배경 이미지 추가</span><input type="file" id="bgImageUpload" accept="image/*" class="hidden">
+                </label>
+                <div id="imageControlPanel" class="hidden space-y-3">
+                     <div class="flex justify-between text-xs"><span>오버레이</span><span id="overlayValueText">원본</span></div><input type="range" id="overlayOpacity" min="-80" max="80" value="0" class="w-full accent-brand-600">
+                     <input type="radio" name="imageFit" value="cover" checked class="hidden"><input type="radio" name="imagePosition" value="middle-center" checked class="hidden"><input type="range" id="bgImageScale" value="100" class="hidden">
+                </div>
+            </div>
+
+            <div id="panel-logo" class="panel-section space-y-4">
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-slate-400 uppercase">플랫폼 로고</label>
+                    <select id="platformSelect" class="w-full px-4 py-3 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl text-sm focus:outline-none">
+                        <option value="">선택 안함</option>
+                        <option value="dokiChat">도키챗</option><option value="luvDuv">러비더비</option><option value="reppley">레플리</option><option value="rplay">로맨틱플레이</option><option value="ropanAI">로판AI</option><option value="melting">멜팅</option><option value="bloom">블룸</option><option value="inkChat">잉크챗</option><option value="zeta">제타</option><option value="carat">캐럿</option><option value="chemi">케밍</option><option value="caveDuck">케이브덕</option><option value="crack">크랙</option><option value="pulse">펄스</option><option value="Fizzchat">피즈챗</option><option value="whif">WHIF</option> 
+                    </select>
+                </div>
+                <div class="space-y-1"><div class="flex justify-between text-xs text-slate-500"><span>로고 크기</span><span id="logoSizeValue">80</span></div><input type="range" id="logoSize" min="50" max="200" step="10" value="80" class="w-full accent-brand-600"></div>
+            </div>
+        </div>
+    </div>
+
+    <nav id="bottom-nav" class="flex-shrink-0 h-[48px] bg-white dark:bg-dark-panel border-t border-slate-200 dark:border-zinc-800 flex items-center justify-around z-20 pb-[safe-area-inset-bottom]">
+        <button onclick="switchTab('text')" class="tab-btn active w-full h-full text-xs text-slate-400 transition-colors">본문</button>
+        <button onclick="switchTab('ratio')" class="tab-btn w-full h-full text-xs text-slate-400 transition-colors">비율</button>
+        <button onclick="switchTab('style')" class="tab-btn w-full h-full text-xs text-slate-400 transition-colors">스타일</button>
+        <button onclick="switchTab('bg')" class="tab-btn w-full h-full text-xs text-slate-400 transition-colors">배경</button>
+        <button onclick="switchTab('logo')" class="tab-btn w-full h-full text-xs text-slate-400 transition-colors">로고</button>
+    </nav>
+
+    <div id="info-modal" class="hidden fixed inset-0 z-50">
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="toggleInfoModal()"></div>
+        <div class="absolute bottom-0 left-0 right-0 bg-white dark:bg-zinc-900 rounded-t-2xl p-6 shadow-2xl transform transition-transform animate-slideUp">
+            <div class="w-12 h-1.5 bg-slate-200 dark:bg-zinc-700 rounded-full mx-auto mb-6"></div>
+            <h3 class="font-bold text-lg mb-2">발췌 문구 생성기 v1.4.3</h3>
+            <p class="text-xs text-slate-500 mb-4">본 사이트는 어떠한 개인정보도 수집하지 않습니다.</p>
+            <div class="space-y-2 text-xs text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-zinc-800 p-4 rounded-xl leading-relaxed"><p>• 업로드한 이미지 및 텍스트의 저작권과 책임은 사용자에게 있습니다.</p><p>• 각 플랫폼의 로고는 해당 사의 상표이므로 가이드라인을 준수하세요.</p><p>• 생성된 이미지는 상업적으로 이용할 수 없습니다.</p></div>
+            <button onclick="toggleInfoModal()" class="w-full mt-4 py-3 bg-slate-100 dark:bg-zinc-800 font-bold rounded-xl text-sm">닫기</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { drawBackground, drawContent } from './draw.js';
+        import { downloadImage, copyImage, normalizeColor } from './utils.js';
+        import { WELCOME_MESSAGE, LOGO_URLS } from './constants.js';
+
+        const state = {
+            canvas: document.getElementById('canvas'),
+            ctx: document.getElementById('canvas').getContext('2d'),
+            bgImage: null,
+            logoImages: {},
+            platform: '',
+            bgType: 'gradient',
+            gradDirection: 'to bottom right',
+            canvasRatio: '1:1',
+            fontFamily: 'Noto Serif KR',
+            indentation: false,
+            isCurlyQuotes: false,
+            isWelcomeActive: true, 
+            colors: { text: '#ffffff', bgMain: '#E6E6FA', gradStart: '#ec4447', gradEnd: '#8c5af2' },
+            pickrs: {}
+        };
+
+        window.switchTab = (tabName) => {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active', 'text-brand-600', 'dark:text-brand-400'));
+            event.currentTarget.classList.add('active', 'text-brand-600', 'dark:text-brand-400');
+            document.querySelectorAll('.panel-section').forEach(p => p.classList.remove('active'));
+            document.getElementById(`panel-${tabName}`).classList.add('active');
+        };
+
+        const quoteInput = document.getElementById('quote');
+        const authorInput = document.getElementById('author');
+        const titleInput = document.getElementById('title');
+
+        function setMode(mode) {
+            document.body.classList.remove('mode-keyboard');
+            if (mode) document.body.classList.add(mode);
+        }
+
+        const handleFocus = () => {
+            if (state.isWelcomeActive && document.activeElement === quoteInput) {
+                quoteInput.value = ''; quoteInput.classList.remove('text-slate-400'); state.isWelcomeActive = false; updateCanvas(); 
+            }
+            setMode('mode-keyboard');
+        };
+
+        [quoteInput, authorInput, titleInput].forEach(el => {
+            el.addEventListener('focus', handleFocus);
+        });
+
+        window.blurInputs = () => {
+            document.activeElement.blur();
+            setMode(null); 
+        };
+
+        window.toggleSettings = () => {
+            document.getElementById('settings-menu').classList.toggle('hidden');
+            document.getElementById('settings-backdrop').classList.toggle('hidden');
+        };
+        window.toggleInfoModal = () => document.getElementById('info-modal').classList.toggle('hidden');
+        window.toggleDarkMode = () => {
+            document.documentElement.classList.toggle('dark');
+            updateThemeIcon();
+            localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+        };
+        function updateThemeIcon() {
+            const isDark = document.documentElement.classList.contains('dark');
+            document.getElementById('theme-icon').className = isDark ? 'ph ph-sun text-xl text-yellow-400' : 'ph ph-moon text-xl';
+        }
+
+        function bindEvents() {
+            ['quote', 'author', 'title'].forEach(id => document.getElementById(id).addEventListener('input', updateCanvas));
+            ['fontSize', 'lineHeight', 'padding', 'logoSize', 'overlayOpacity'].forEach(id => {
+                document.getElementById(id).addEventListener('input', (e) => {
+                    const val = e.target.value;
+                    const label = document.getElementById(`${id}Value`);
+                    if(label) label.innerText = val;
+                    if(id === 'overlayOpacity') document.getElementById('overlayValueText').innerText = val == 0 ? "원본" : (val < 0 ? `밝게 ${Math.abs(val)}` : `어둡게 ${val}`);
+                    updateCanvas();
+                });
+            });
+            document.querySelectorAll('input[name="align"], input[name="bgMode"]').forEach(el => {
+                el.addEventListener('change', (e) => {
+                    if(e.target.name === 'bgMode') { state.bgType = e.target.value; togglePalette(); }
+                    updateCanvas();
+                });
+            });
+            document.getElementById('platformSelect').addEventListener('change', (e) => { state.platform = e.target.value; updateCanvas(); });
+            document.getElementById('bgImageUpload').addEventListener('change', (e) => {
+                const file = e.target.files[0]; if(!file) return;
+                const reader = new FileReader();
+                reader.onload = (evt) => {
+                    const img = new Image();
+                    img.onload = () => { state.bgImage = img; document.getElementById('imageControlPanel').classList.remove('hidden'); updateCanvas(); };
+                    img.src = evt.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        window.setRatio = (ratio) => {
+            state.canvasRatio = ratio;
+            document.querySelectorAll('.ratio-btn').forEach(b => b.classList.remove('bg-brand-50', 'dark:bg-zinc-800', 'border-brand-500', 'ring-1'));
+            const map = {'1:1':'btn-ratio-1-1', '4:5':'btn-ratio-4-5', '16:9':'btn-ratio-16-9'};
+            document.getElementById(map[ratio]).classList.add('bg-brand-50', 'dark:bg-zinc-800', 'border-brand-500', 'ring-1');
+            resizeCanvas(); updateCanvas();
+        };
+        window.setFont = (font) => {
+            state.fontFamily = font;
+            document.querySelectorAll('.font-btn').forEach(b => b.classList.remove('bg-brand-50', 'text-brand-600', 'border-brand-500'));
+            event.target.classList.add('bg-brand-50', 'text-brand-600', 'border-brand-500');
+            document.fonts.load(`20px '${font}'`).then(updateCanvas); updateCanvas();
+        };
+        
+        window.toggleIndentation = () => {
+            state.indentation = !state.indentation;
+            const btnBottom = document.getElementById('kb-btn-indent');
+            const btnTop = document.getElementById('top-btn-indent');
+            
+            if(state.indentation) {
+                if(btnBottom) btnBottom.classList.add('active');
+                if(btnTop) btnTop.classList.add('active');
+            } else {
+                if(btnBottom) btnBottom.classList.remove('active');
+                if(btnTop) btnTop.classList.remove('active');
+            }
+            updateCanvas();
+        };
+
+        window.toggleQuoteStyle = () => {
+            const ta = document.getElementById('quote');
+            let text = ta.value;
+            const btnBottom = document.getElementById('kb-btn-quote');
+            const btnTop = document.getElementById('top-btn-quote');
+
+            if(!state.isCurlyQuotes) {
+                text = text.replace(/(^|[\s\(\[\{])"/g, "$1“").replace(/"/g, "”").replace(/(^|[\s\(\[\{])'/g, "$1‘").replace(/'/g, "’");
+                state.isCurlyQuotes = true;
+                if(btnBottom) btnBottom.classList.add('active');
+                if(btnTop) btnTop.classList.add('active');
+            } else {
+                text = text.replace(/[“”]/g, '"').replace(/[‘’]/g, "'");
+                state.isCurlyQuotes = false;
+                if(btnBottom) btnBottom.classList.remove('active');
+                if(btnTop) btnTop.classList.remove('active');
+            }
+            ta.value = text;
+            updateCanvas();
+        };
+
+        window.clearQuoteTextOnly = () => {
+            document.getElementById('quote').value = '';
+            state.isWelcomeActive = false; 
+            document.getElementById('quote').classList.remove('text-slate-400');
+            updateCanvas();
+        }
+
+        window.pasteFromClipboard = async () => {
+            try {
+                const text = await navigator.clipboard.readText();
+                const quote = document.getElementById('quote');
+                const start = quote.selectionStart;
+                const end = quote.selectionEnd;
+                quote.value = quote.value.substring(0, start) + text + quote.value.substring(end);
+                quote.selectionStart = quote.selectionEnd = start + text.length;
+                if (state.isWelcomeActive) { quote.classList.remove('text-slate-400'); state.isWelcomeActive = false; }
+                updateCanvas();
+                quote.focus();
+            } catch (err) { alert('붙여넣기 권한을 허용해주세요.'); }
+        };
+
+        function updateCanvas() {
+            const width = state.canvas.width; const height = state.canvas.height;
+            state.ctx.clearRect(0,0, width, height);
+            drawBackground(state.ctx, width, height, state);
+            drawContent(state.ctx, width, height, state);
+        }
+        function resizeCanvas() {
+            let w = 1080, h = 1080;
+            if(state.canvasRatio === '4:5') h = 1350; if(state.canvasRatio === '16:9') { w = 1920; h = 1080; }
+            state.canvas.width = w; state.canvas.height = h;
+        }
+        function togglePalette() {
+            if(state.bgType === 'solid') { document.getElementById('solidColorPanel').classList.remove('hidden'); document.getElementById('gradientColorPanel').classList.add('hidden'); } 
+            else { document.getElementById('solidColorPanel').classList.add('hidden'); document.getElementById('gradientColorPanel').classList.remove('hidden'); }
+        }
+        function initPickrs() {
+            const create = (el, key) => {
+                const p = Pickr.create({ el: el, theme: 'classic', default: state.colors[key], components: { preview: true, opacity: true, hue: true, interaction: { input: true, save: true } } });
+                p.on('save', (c) => { state.colors[key] = c.toHEXA().toString(); p.hide(); updateCanvas(); });
+                p.on('change', (c) => { state.colors[key] = c.toHEXA().toString(); updateCanvas(); });
+                state.pickrs[key] = p;
+            };
+            create('#textColorPicker', 'text'); create('#bgColorMainPicker', 'bgMain'); create('#gradStartColorPicker', 'gradStart'); create('#gradEndColorPicker', 'gradEnd');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if(localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)){ document.documentElement.classList.add('dark'); }
+            updateThemeIcon();
+            bindEvents(); initPickrs(); resizeCanvas();
+            for(const [k, url] of Object.entries(LOGO_URLS)) { const img = new Image(); img.crossOrigin="Anonymous"; img.src = url; state.logoImages[k] = img; }
+            
+            const q = document.getElementById('quote');
+            q.value = WELCOME_MESSAGE;
+            q.classList.add('text-slate-400');
+            state.isWelcomeActive = true; 
+
+            setTimeout(updateCanvas, 500);
+            window.downloadImage = () => downloadImage(state.canvas); window.copyImage = () => copyImage(state.canvas);
+        });
+    </script>
+</body>
+</html>
