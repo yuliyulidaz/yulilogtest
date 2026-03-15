@@ -1459,6 +1459,7 @@
             document.querySelectorAll('input[name="logoMode"]').forEach(el => {
                 el.addEventListener('change', (e) => {
                     state.logoMode = e.target.value;
+                    if (window._mainState) window._mainState.logoMode = e.target.value;
                     toggleLogoPanels();
                     updateCanvas();
                 });
@@ -1467,7 +1468,7 @@
             document.querySelectorAll('input[name="logoPosition"]').forEach(el => {
                 el.addEventListener('change', (e) => {
                     state.logoPosition = e.target.value;
-                    if (window._inlineState) window._inlineState.logoPosition = e.target.value;
+                    if (window._mainState) window._mainState.logoPosition = e.target.value;
                     updateCanvas();
                 });
             });
@@ -1526,6 +1527,10 @@
                         cropModal.style.display = 'none';
                         customCropper.destroy();
                         customCropper = null;
+                        if (window._mainState) {
+                            window._mainState.customLogoImage = state.customLogoImage;
+                            window._mainState.customLogoDataUrl = state.customLogoDataUrl;
+                        }
                         updateCanvas();
                     };
                     state.customLogoImage.src = croppedDataUrl;
@@ -1539,6 +1544,10 @@
                 btnCustomLogoDelete.addEventListener('click', () => {
                     state.customLogoDataUrl = '';
                     state.customLogoImage = null;
+                    if (window._mainState) {
+                        window._mainState.customLogoImage = null;
+                        window._mainState.customLogoDataUrl = '';
+                    }
                     customLogoControlPanel.style.display = 'none';
                     customLogoFileName.innerText = '';
                     document.getElementById('customLogoUploadLabel').classList.remove('hidden');
