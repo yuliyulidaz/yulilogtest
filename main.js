@@ -629,6 +629,7 @@ window.toggleDesktopEditorSize = function() {
 window.deleteBackgroundImage = function() {
     state.bgImage = null;
     state.bgImageName = null;
+    if (window._inlineState) { window._inlineState.bgImage = null; window._inlineState.bgImageName = null; }
     document.getElementById('bgImageUpload').value = '';
     document.getElementById('imageControlPanel').classList.add('hidden');
     document.getElementById('bgImageUploadLabel').classList.remove('hidden');
