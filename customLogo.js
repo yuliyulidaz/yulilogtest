@@ -133,12 +133,13 @@ export function initCustomLogo(state, updateCanvasCb) {
     btnCustomLogoDelete.addEventListener('click', () => {
         state.customLogoDataUrl = '';
         state.customLogoImage = null;
-        
+
         // Reset UI
         customLogoControlPanel.style.display = 'none';
         customLogoPreviewWrapper.style.display = 'none';
         customLogoPreviewImg.src = '';
-        
+        document.getElementById('customLogoUploadLabel').classList.remove('hidden');
+
         updateCanvasCb();
     });
 
