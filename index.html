@@ -999,6 +999,12 @@
                         state.customLogoDataUrl = settings.customLogoDataUrl;
                         state.customLogoImage = new Image();
                         state.customLogoImage.src = state.customLogoDataUrl;
+                        const previewImg = document.getElementById('customLogoPreviewImg');
+                        const previewWrapper = document.getElementById('customLogoPreviewWrapper');
+                        const controlPanel = document.getElementById('customLogoControlPanel');
+                        if (previewImg) previewImg.src = settings.customLogoDataUrl;
+                        if (previewWrapper) previewWrapper.style.display = 'flex';
+                        if (controlPanel) controlPanel.style.display = 'flex';
                     }
 
                     // Restore Logo Mode Radio
@@ -1362,6 +1368,74 @@
             });
 
             document.getElementById('bgImageUpload').addEventListener('change', handleImageUpload);
+
+            if (!window._logoHandlerReady) {
+                window._logoHandlerReady = true;
+                let customCropper = null;
+                const cropModal = document.getElementById('crop-modal');
+                const imageToCrop = document.getElementById('image-to-crop');
+                const btnCancelCrop = document.getElementById('btn-cancel-crop');
+                const btnApplyCrop = document.getElementById('btn-apply-crop');
+                const customLogoUploadEl = document.getElementById('customLogoUpload');
+                const customLogoPreviewWrapper = document.getElementById('customLogoPreviewWrapper');
+                const customLogoPreviewImg = document.getElementById('customLogoPreviewImg');
+                const customLogoControlPanel = document.getElementById('customLogoControlPanel');
+                const btnCustomLogoDelete = document.getElementById('btnCustomLogoDelete');
+
+                customLogoUploadEl.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        imageToCrop.src = event.target.result;
+                        cropModal.style.display = 'flex';
+                        if (customCropper) { customCropper.destroy(); customCropper = null; }
+                        setTimeout(() => {
+                            customCropper = new Cropper(imageToCrop, {
+                                aspectRatio: 1, viewMode: 1, dragMode: 'move',
+                                guides: false, center: true, background: false, autoCropArea: 0.8,
+                            });
+                        }, 100);
+                        customLogoUploadEl.value = '';
+                    };
+                    reader.readAsDataURL(file);
+                });
+
+                btnApplyCrop.addEventListener('click', () => {
+                    if (!customCropper) return;
+                    const canvas = customCropper.getCroppedCanvas({
+                        width: 200, height: 200, fillColor: 'transparent',
+                        imageSmoothingEnabled: true, imageSmoothingQuality: 'high',
+                    });
+                    const croppedDataUrl = canvas.toDataURL('image/png', 0.9);
+                    state.customLogoDataUrl = croppedDataUrl;
+                    state.customLogoImage = new Image();
+                    state.customLogoImage.onload = () => {
+                        customLogoPreviewImg.src = croppedDataUrl;
+                        customLogoControlPanel.style.display = 'flex';
+                        customLogoPreviewWrapper.style.display = 'flex';
+                        cropModal.style.display = 'none';
+                        customCropper.destroy();
+                        customCropper = null;
+                        updateCanvas();
+                    };
+                    state.customLogoImage.src = croppedDataUrl;
+                });
+
+                btnCancelCrop.addEventListener('click', () => {
+                    cropModal.style.display = 'none';
+                    if (customCropper) { customCropper.destroy(); customCropper = null; }
+                });
+
+                btnCustomLogoDelete.addEventListener('click', () => {
+                    state.customLogoDataUrl = '';
+                    state.customLogoImage = null;
+                    customLogoControlPanel.style.display = 'none';
+                    customLogoPreviewWrapper.style.display = 'none';
+                    customLogoPreviewImg.src = '';
+                    updateCanvas();
+                });
+            }
         }
 
         // --- Logic Functions ---
@@ -1857,7 +1931,12 @@
                 ctx.fillText(titlePart, startX + wAuthor + wSep, currentY);
             }
 
-            const logoImg = platform ? state.logoImages[platform] : null;
+            let logoImg = null;
+            if (state.logoMode === 'custom') {
+                logoImg = state.customLogoImage;
+            } else {
+                logoImg = platform ? state.logoImages[platform] : null;
+            }
             if (logoImg && logoImg.complete && logoImg.naturalHeight !== 0) {
                 const radius = logoSize / 2;
                 const margin = 60; 
