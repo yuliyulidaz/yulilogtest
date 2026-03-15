@@ -82,6 +82,8 @@ function saveSettings() {
         indentation: state.indentation,
         colors: state.colors,
         platform: state.platform,
+        logoMode: state.logoMode,
+        customLogoDataUrl: state.customLogoDataUrl,
         styles: {
             fontSize: document.getElementById('fontSize').value,
             lineHeight: document.getElementById('lineHeight').value,

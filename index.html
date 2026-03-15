@@ -954,6 +954,8 @@
                 indentation: state.indentation,
                 colors: state.colors,
                 platform: state.platform,
+                logoMode: state.logoMode,
+                customLogoDataUrl: state.customLogoDataUrl,
                 styles: {
                     fontSize: document.getElementById('fontSize').value,
                     lineHeight: document.getElementById('lineHeight').value,
@@ -988,6 +990,16 @@
                     if (settings.indentation !== undefined) state.indentation = settings.indentation;
                     if (settings.colors) state.colors = { ...state.colors, ...settings.colors };
                     if (settings.platform) state.platform = settings.platform;
+                    if (settings.logoMode) state.logoMode = settings.logoMode;
+                    if (settings.customLogoDataUrl) {
+                        state.customLogoDataUrl = settings.customLogoDataUrl;
+                        state.customLogoImage = new Image();
+                        state.customLogoImage.src = state.customLogoDataUrl;
+                    }
+
+                    // Restore Logo Mode Radio
+                    const logoModeRb = document.querySelector(`input[name="logoMode"][value="${state.logoMode}"]`);
+                    if (logoModeRb) logoModeRb.checked = true;
 
                     // Restore UI Elements (Styles)
                     if (settings.styles) {
