@@ -1670,6 +1670,7 @@
                 img.onload = () => {
                     state.bgImage = img;
                     state.bgImageName = file.name;
+                    if (window._mainState) { window._mainState.bgImage = img; window._mainState.bgImageName = file.name; }
                     document.getElementById('imageFileName').innerText = file.name;
                     document.getElementById('imageControlPanel').classList.remove('hidden');
                     document.getElementById('bgImageUploadLabel').classList.add('hidden');

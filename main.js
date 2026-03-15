@@ -423,6 +423,7 @@ function handleImageUpload(e) {
         img.onload = () => {
             state.bgImage = img;
             state.bgImageName = file.name;
+            if (window._inlineState) { window._inlineState.bgImage = img; window._inlineState.bgImageName = file.name; }
             document.getElementById('imageFileName').innerText = file.name;
             document.getElementById('imageControlPanel').classList.remove('hidden');
             document.getElementById('bgImageUploadLabel').classList.add('hidden');
