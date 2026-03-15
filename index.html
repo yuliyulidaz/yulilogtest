@@ -1456,6 +1456,7 @@
             document.querySelectorAll('input[name="bgMode"]').forEach(el => {
                 el.addEventListener('change', (e) => {
                     state.bgType = e.target.value;
+                    if (window._mainState) window._mainState.bgType = e.target.value;
                     togglePaletteVisibility();
                     updateCanvas();
                 });
@@ -1614,6 +1615,7 @@
 
         function setDirection(direction) {
             state.gradDirection = direction;
+            if (window._mainState) window._mainState.gradDirection = direction;
             updateDirectionUI();
             updateCanvas();
         }
@@ -1710,6 +1712,7 @@
         // New Indentation Toggle Function
         function toggleIndentation() {
             state.indentation = !state.indentation;
+            if (window._mainState) window._mainState.indentation = state.indentation;
             updateIndentationUI();
             updateCanvas();
         }
@@ -1764,6 +1767,7 @@
                 btn.classList.add('text-slate-400', 'bg-slate-50');
             }
             
+            if (window._mainState) window._mainState.isCurlyQuotes = state.isCurlyQuotes;
             textarea.value = text;
             updateCanvas();
         }

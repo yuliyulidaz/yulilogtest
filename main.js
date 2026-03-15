@@ -393,6 +393,7 @@ function bindEvents() {
     document.querySelectorAll('input[name="bgMode"]').forEach(el => {
         el.addEventListener('change', (e) => {
             state.bgType = e.target.value;
+            if (window._inlineState) window._inlineState.bgType = e.target.value;
             togglePaletteVisibility();
             updateCanvas();
         });
@@ -583,6 +584,7 @@ window.closeMobileEditor = function() {
 
 window.setRatio = function(ratio) {
     state.canvasRatio = ratio;
+    if (window._inlineState) window._inlineState.canvasRatio = ratio;
     updateRatioUI();
     resizeCanvas();
     updateCanvas();
@@ -590,6 +592,7 @@ window.setRatio = function(ratio) {
 
 window.setFont = function(fontName) {
     state.fontFamily = fontName;
+    if (window._inlineState) window._inlineState.fontFamily = fontName;
     updateFontUI();
     let fontWeight = '400';
     if (['Noto Serif KR', 'KoPub Batang'].includes(fontName)) fontWeight = '300';
@@ -601,6 +604,7 @@ window.setFont = function(fontName) {
 
 window.setDirection = function(direction) {
     state.gradDirection = direction;
+    if (window._inlineState) window._inlineState.gradDirection = direction;
     updateDirectionUI();
     updateCanvas();
 };
