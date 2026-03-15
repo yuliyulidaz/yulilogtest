@@ -92,6 +92,7 @@ function saveSettings() {
             align: document.querySelector('input[name="align"]:checked').value,
             linebreak: document.querySelector('input[name="linebreak"]:checked').value,
             logoSize: document.getElementById('logoSize').value,
+            logoOpacity: document.getElementById('logoOpacity').value,
             overlayOpacity: document.getElementById('overlayOpacity').value,
             bgImageScale: document.getElementById('bgImageScale').value,
         }
@@ -132,6 +133,10 @@ function loadSettings() {
                 if(settings.styles.paraSpacing) document.getElementById('paraSpacing').value = settings.styles.paraSpacing;
                 if(settings.styles.padding) document.getElementById('padding').value = settings.styles.padding;
                 if(settings.styles.logoSize) document.getElementById('logoSize').value = settings.styles.logoSize;
+                if(settings.styles.logoOpacity !== undefined) {
+                    document.getElementById('logoOpacity').value = settings.styles.logoOpacity;
+                    document.getElementById('logoOpacityValue').innerText = settings.styles.logoOpacity;
+                }
                 if(settings.styles.overlayOpacity) document.getElementById('overlayOpacity').value = settings.styles.overlayOpacity;
                 if(settings.styles.bgImageScale) document.getElementById('bgImageScale').value = settings.styles.bgImageScale;
                 
