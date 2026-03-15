@@ -841,8 +841,21 @@
                                 <input type="range" id="logoOpacity" min="0" max="50" step="1" value="0" class="w-full">
                             </div>
                         </div>
+
+                        <!-- 위치 선택 -->
+                        <div class="space-y-2">
+                            <label class="text-xs font-medium text-slate-500">위치</label>
+                            <div class="grid grid-cols-3 gap-1 max-w-[120px]">
+                                <label class="aspect-square cursor-pointer"><input type="radio" name="logoPosition" value="top-left" class="peer hidden"><div class="w-full h-full border border-slate-200 dark:border-slate-700 rounded hover:bg-slate-100 dark:hover:bg-slate-700 peer-checked:bg-brand-500 peer-checked:border-brand-500"></div></label>
+                                <label class="aspect-square cursor-pointer"><input type="radio" name="logoPosition" value="top-center" class="peer hidden"><div class="w-full h-full border border-slate-200 dark:border-slate-700 rounded hover:bg-slate-100 dark:hover:bg-slate-700 peer-checked:bg-brand-500 peer-checked:border-brand-500"></div></label>
+                                <label class="aspect-square cursor-pointer"><input type="radio" name="logoPosition" value="top-right" class="peer hidden"><div class="w-full h-full border border-slate-200 dark:border-slate-700 rounded hover:bg-slate-100 dark:hover:bg-slate-700 peer-checked:bg-brand-500 peer-checked:border-brand-500"></div></label>
+                                <label class="aspect-square cursor-pointer"><input type="radio" name="logoPosition" value="bottom-left" class="peer hidden"><div class="w-full h-full border border-slate-200 dark:border-slate-700 rounded hover:bg-slate-100 dark:hover:bg-slate-700 peer-checked:bg-brand-500 peer-checked:border-brand-500"></div></label>
+                                <label class="aspect-square cursor-pointer"><input type="radio" name="logoPosition" value="bottom-center" class="peer hidden"><div class="w-full h-full border border-slate-200 dark:border-slate-700 rounded hover:bg-slate-100 dark:hover:bg-slate-700 peer-checked:bg-brand-500 peer-checked:border-brand-500"></div></label>
+                                <label class="aspect-square cursor-pointer"><input type="radio" name="logoPosition" value="bottom-right" checked class="peer hidden"><div class="w-full h-full border border-slate-200 dark:border-slate-700 rounded hover:bg-slate-100 dark:hover:bg-slate-700 peer-checked:bg-brand-500 peer-checked:border-brand-500"></div></label>
+                            </div>
+                        </div>
                     </section>
-                    
+
                     <!-- Footer Info -->
                     <footer class="mt-8 pt-8 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-400 dark:text-slate-500 space-y-4 pb-8">
                          <!-- Sister Site Link -->
@@ -940,6 +953,7 @@
             isEditorExpanded: false, // Desktop Editor Expansion State
             isWelcomeActive: true, // Track if welcome message is being shown
             logoMode: 'platform',
+            logoPosition: 'bottom-right',
             customLogoImage: null,
             customLogoDataUrl: '',
             colors: {
@@ -1027,6 +1041,7 @@
                 colors: state.colors,
                 platform: state.platform,
                 logoMode: state.logoMode,
+                logoPosition: state.logoPosition,
                 customLogoDataUrl: state.customLogoDataUrl,
                 styles: {
                     fontSize: document.getElementById('fontSize').value,
@@ -1064,6 +1079,11 @@
                     if (settings.colors) state.colors = { ...state.colors, ...settings.colors };
                     if (settings.platform) state.platform = settings.platform;
                     if (settings.logoMode) state.logoMode = settings.logoMode;
+                    if (settings.logoPosition) {
+                        state.logoPosition = settings.logoPosition;
+                        const logoPositionRb = document.querySelector(`input[name="logoPosition"][value="${settings.logoPosition}"]`);
+                        if (logoPositionRb) logoPositionRb.checked = true;
+                    }
                     if (settings.customLogoDataUrl) {
                         state.customLogoDataUrl = settings.customLogoDataUrl;
                         state.customLogoImage = new Image();
@@ -1440,6 +1460,14 @@
                 el.addEventListener('change', (e) => {
                     state.logoMode = e.target.value;
                     toggleLogoPanels();
+                    updateCanvas();
+                });
+            });
+
+            document.querySelectorAll('input[name="logoPosition"]').forEach(el => {
+                el.addEventListener('change', (e) => {
+                    state.logoPosition = e.target.value;
+                    if (window._inlineState) window._inlineState.logoPosition = e.target.value;
                     updateCanvas();
                 });
             });
@@ -2026,9 +2054,14 @@
             }
             if (logoImg && logoImg.complete && logoImg.naturalHeight !== 0) {
                 const radius = logoSize / 2;
-                const margin = 60; 
-                const logoX = width - margin - radius;
-                const logoY = height - margin - radius;
+                const margin = 60;
+                const pos = state.logoPosition || 'bottom-right';
+                let logoX, logoY;
+                if (pos.includes('left'))        logoX = margin + radius;
+                else if (pos.includes('center')) logoX = width / 2;
+                else                             logoX = width - margin - radius;
+                if (pos.startsWith('top'))       logoY = margin + radius;
+                else                             logoY = height - margin - radius;
 
                 ctx.save();
                 const logoOpacityVal = parseInt(document.getElementById('logoOpacity').value) || 0;

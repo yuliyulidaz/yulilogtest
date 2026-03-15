@@ -21,6 +21,7 @@ const state = {
     isEditorExpanded: false,
     isWelcomeActive: true,
     logoMode: 'platform', // 'platform' or 'custom'
+    logoPosition: 'bottom-right',
     customLogoImage: null,
     customLogoDataUrl: '',
     colors: {
@@ -83,6 +84,7 @@ function saveSettings() {
         colors: state.colors,
         platform: state.platform,
         logoMode: state.logoMode,
+        logoPosition: state.logoPosition,
         customLogoDataUrl: state.customLogoDataUrl,
         styles: {
             fontSize: document.getElementById('fontSize').value,
@@ -118,6 +120,11 @@ function loadSettings() {
             if (settings.indentation !== undefined) state.indentation = settings.indentation;
             if (settings.isCurlyQuotes !== undefined) state.isCurlyQuotes = settings.isCurlyQuotes;
             if (settings.logoMode) state.logoMode = settings.logoMode;
+            if (settings.logoPosition) {
+                state.logoPosition = settings.logoPosition;
+                const logoPositionRb = document.querySelector(`input[name="logoPosition"][value="${settings.logoPosition}"]`);
+                if (logoPositionRb) logoPositionRb.checked = true;
+            }
             if (settings.customLogoDataUrl) {
                 state.customLogoDataUrl = settings.customLogoDataUrl;
                 state.customLogoImage = new Image();
@@ -389,6 +396,14 @@ function bindEvents() {
     document.getElementById('platformSelect').addEventListener('change', (e) => {
         state.platform = e.target.value;
         updateCanvas();
+    });
+
+    document.querySelectorAll('input[name="logoPosition"]').forEach(el => {
+        el.addEventListener('change', (e) => {
+            state.logoPosition = e.target.value;
+            if (window._inlineState) window._inlineState.logoPosition = e.target.value;
+            updateCanvas();
+        });
     });
 
     document.getElementById('bgImageUpload').addEventListener('change', handleImageUpload);
