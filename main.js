@@ -405,6 +405,7 @@ function handleImageUpload(e) {
             state.bgImageName = file.name;
             document.getElementById('imageFileName').innerText = file.name;
             document.getElementById('imageControlPanel').classList.remove('hidden');
+            document.getElementById('bgImageUploadLabel').classList.add('hidden');
             updateCanvas();
         };
         img.src = event.target.result;
@@ -630,6 +631,7 @@ window.deleteBackgroundImage = function() {
     state.bgImageName = null;
     document.getElementById('bgImageUpload').value = '';
     document.getElementById('imageControlPanel').classList.add('hidden');
+    document.getElementById('bgImageUploadLabel').classList.remove('hidden');
     document.getElementById('overlayOpacity').value = 0;
     document.getElementById('overlayValueText').innerText = "원본";
     updateCanvas();
