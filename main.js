@@ -400,6 +400,7 @@ function bindEvents() {
 
     document.getElementById('platformSelect').addEventListener('change', (e) => {
         state.platform = e.target.value;
+        if (window._inlineState) window._inlineState.platform = e.target.value;
         updateCanvas();
     });
 

@@ -1463,6 +1463,7 @@
 
             document.getElementById('platformSelect').addEventListener('change', (e) => {
                 state.platform = e.target.value;
+                if (window._mainState) window._mainState.platform = e.target.value;
                 updateCanvas();
             });
 
