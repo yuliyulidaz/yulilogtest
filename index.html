@@ -872,6 +872,9 @@
             isCurlyQuotes: false, // New Quote Style State
             isEditorExpanded: false, // Desktop Editor Expansion State
             isWelcomeActive: true, // Track if welcome message is being shown
+            logoMode: 'platform',
+            customLogoImage: null,
+            customLogoDataUrl: '',
             colors: {
                 text: '#ffffff', // Default Text Color White for Neon Sunset
                 bgMain: '#E6E6FA', // Default Solid Color: Lavender
@@ -914,7 +917,8 @@
             updateFontUI();
             updateDirectionUI();
             togglePaletteVisibility(); // Ensure correct palette shows based on loaded type
-            
+            toggleLogoPanels(); // Ensure correct logo panel shows based on loaded type
+
             // Set Welcome Message
             const quoteInput = document.getElementById('quote');
             quoteInput.value = WELCOME_MESSAGE;
@@ -1000,6 +1004,7 @@
                     // Restore Logo Mode Radio
                     const logoModeRb = document.querySelector(`input[name="logoMode"][value="${state.logoMode}"]`);
                     if (logoModeRb) logoModeRb.checked = true;
+                    toggleLogoPanels();
 
                     // Restore UI Elements (Styles)
                     if (settings.styles) {
@@ -1348,6 +1353,14 @@
                 updateCanvas();
             });
 
+            document.querySelectorAll('input[name="logoMode"]').forEach(el => {
+                el.addEventListener('change', (e) => {
+                    state.logoMode = e.target.value;
+                    toggleLogoPanels();
+                    updateCanvas();
+                });
+            });
+
             document.getElementById('bgImageUpload').addEventListener('change', handleImageUpload);
         }
 
@@ -1424,6 +1437,18 @@
                 gradPanel.classList.remove('hidden');
                 solidPalette.classList.add('hidden');
                 gradPalette.classList.remove('hidden');
+            }
+        }
+
+        function toggleLogoPanels() {
+            const platformSelectPanel = document.getElementById('platformSelectPanel');
+            const customLogoPanel = document.getElementById('customLogoPanel');
+            if (state.logoMode === 'platform') {
+                platformSelectPanel.classList.remove('hidden');
+                customLogoPanel.classList.add('hidden');
+            } else {
+                platformSelectPanel.classList.add('hidden');
+                customLogoPanel.classList.remove('hidden');
             }
         }
 
